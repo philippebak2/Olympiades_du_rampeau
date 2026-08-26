@@ -34,7 +34,7 @@ export function calculatePlayerScore(playerScore: PoulePlayerScore): {
   };
 }
 
-// Tri des joueurs d'une poule par score décroissant + départage
+// Tri des joueurs d'une poule par score décroissant + départage multi-joueurs
 export function sortPoulePlayers(
   poule: Poule,
   allPlayersMap: Map<number, Player>
@@ -46,6 +46,9 @@ export function sortPoulePlayers(
   isQualified: boolean;
   rank: number;
   needsTieBreak: boolean;
+  isTied: boolean;
+  isCriticalTie: boolean;
+  tieGroupSize: number;
 }> {
   const list = poule.playerScores.map((scoreObj) => {
     const { roundScore, totalScore } = calculatePlayerScore(scoreObj);
@@ -61,7 +64,12 @@ export function sortPoulePlayers(
     };
   });
 
-  // Tri: TotalScore DESC -> TieBreak DESC -> SecondThrow DESC -> FirstThrow DESC -> playerId ASC
+  // Tri complet:
+  // 1. TotalScore (Score régulier du tour ou cumulé) DESC
+  // 2. TieBreak (Tir de barrage / départage) DESC
+  // 3. SecondThrow DESC (Tour 1)
+  // 4. FirstThrow DESC
+  // 5. playerId ASC (déterminisme)
   list.sort((a, b) => {
     if (b.totalScore !== a.totalScore) return b.totalScore - a.totalScore;
     if (b.tieBreak !== a.tieBreak) return b.tieBreak - a.tieBreak;
@@ -72,23 +80,42 @@ export function sortPoulePlayers(
 
   const qualifyCount = poule.qualifyCount;
 
+  // Calcul du nombre de joueurs par score total pour détecter tous les groupes d'égalités
+  const scoreCounts = new Map<number, number>();
+  list.forEach((item) => {
+    scoreCounts.set(item.totalScore, (scoreCounts.get(item.totalScore) || 0) + 1);
+  });
+
+  // Détection du score critique sur la frontière de qualification
+  let criticalCutoffScore: number | null = null;
+  if (list.length > qualifyCount && qualifyCount > 0) {
+    const lastQualItem = list[qualifyCount - 1]; // Dernier potentiellement qualifié
+    const firstElimItem = list[qualifyCount];    // Premier potentiellement éliminé
+    if (lastQualItem && firstElimItem && lastQualItem.totalScore === firstElimItem.totalScore) {
+      criticalCutoffScore = lastQualItem.totalScore;
+    }
+  }
+
+  // Vérifier si le départage à la frontière critique est non résolu
+  let criticalTieUnresolved = false;
+  if (criticalCutoffScore !== null && list.length > qualifyCount) {
+    const lastQualItem = list[qualifyCount - 1];
+    const firstElimItem = list[qualifyCount];
+    // Égalité non résolue si les scores de barrage sont égaux (ex: tous deux à 0 ou identiques)
+    if (lastQualItem.tieBreak === firstElimItem.tieBreak) {
+      criticalTieUnresolved = true;
+    }
+  }
+
   return list.map((item, index) => {
     const rank = index + 1;
     const isQualified = rank <= qualifyCount;
+    const tieGroupSize = scoreCounts.get(item.totalScore) || 1;
+    const isTied = tieGroupSize > 1;
+    const isCriticalTie = criticalCutoffScore !== null && item.totalScore === criticalCutoffScore;
 
-    // Détection si égalité sur la frontière de qualification (ex: entre le 5e et 6e)
-    let needsTieBreak = false;
-    if (list.length >= qualifyCount && rank === qualifyCount) {
-      const nextItem = list[qualifyCount]; // Le (qualifyCount + 1)-ème joueur
-      if (nextItem && nextItem.totalScore === item.totalScore && (item.tieBreak === 0 && nextItem.tieBreak === 0)) {
-        needsTieBreak = true;
-      }
-    } else if (list.length > qualifyCount && rank === qualifyCount + 1) {
-      const prevItem = list[qualifyCount - 1]; // Le qualifyCount-ème
-      if (prevItem && prevItem.totalScore === item.totalScore && (item.tieBreak === 0 && prevItem.tieBreak === 0)) {
-        needsTieBreak = true;
-      }
-    }
+    // A besoin d'un tir de barrage si ce joueur est dans le groupe critique et que l'égalité n'est pas encore tranchée
+    const needsTieBreak = isCriticalTie && (criticalTieUnresolved || item.tieBreak === 0);
 
     return {
       scoreObj: item.scoreObj,
@@ -98,6 +125,9 @@ export function sortPoulePlayers(
       isQualified,
       rank,
       needsTieBreak,
+      isTied,
+      isCriticalTie,
+      tieGroupSize,
     };
   });
 }

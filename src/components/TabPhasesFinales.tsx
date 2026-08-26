@@ -82,11 +82,17 @@ export const TabPhasesFinales: React.FC<TabPhasesFinalesProps> = ({
     const p1 = match.player1Id ? playersMap.get(match.player1Id) : null;
     const p2 = match.player2Id ? playersMap.get(match.player2Id) : null;
 
-    const isTie =
+    const isBaseScoreTie =
       match.score1 !== null &&
       match.score2 !== null &&
-      match.score1 === match.score2 &&
-      match.tieBreak1 === match.tieBreak2;
+      match.score1 === match.score2;
+
+    const showTieBreakInputs =
+      isBaseScoreTie ||
+      (match.tieBreak1 !== null && match.tieBreak1 !== undefined && match.tieBreak1 > 0) ||
+      (match.tieBreak2 !== null && match.tieBreak2 !== undefined && match.tieBreak2 > 0);
+
+    const isTie = isBaseScoreTie && match.tieBreak1 === match.tieBreak2;
 
     const isP1Winner = match.winnerId === match.player1Id && match.player1Id !== null;
     const isP2Winner = match.winnerId === match.player2Id && match.player2Id !== null;
@@ -157,7 +163,7 @@ export const TabPhasesFinales: React.FC<TabPhasesFinalesProps> = ({
 
             {/* Score & Tie Break for P1 */}
             <div className="flex items-center gap-1 shrink-0">
-              {isTie && (
+              {showTieBreakInputs && (
                 <div className="flex items-center gap-0.5" title="Tir de barrage">
                   <span className="text-[9px] text-amber-700 font-bold">Barrage:</span>
                   <PinScoreInput
@@ -234,7 +240,7 @@ export const TabPhasesFinales: React.FC<TabPhasesFinalesProps> = ({
 
             {/* Score & Tie Break for P2 */}
             <div className="flex items-center gap-1 shrink-0">
-              {isTie && (
+              {showTieBreakInputs && (
                 <div className="flex items-center gap-0.5" title="Tir de barrage">
                   <span className="text-[9px] text-amber-700 font-bold">Barrage:</span>
                   <PinScoreInput

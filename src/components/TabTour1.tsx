@@ -61,17 +61,31 @@ export const TabTour1: React.FC<TabTour1Props> = ({
   let totalThrowsNeeded = 0;
   let totalThrowsCompleted = 0;
   let hasPendingTieBreaks = false;
+  const pendingTieBreakMessages: string[] = [];
 
   poules.forEach((poule) => {
+    let pouleThrowsDone = true;
     poule.playerScores.forEach((ps) => {
       totalThrowsNeeded += 2;
-      if (ps.tirs[0] !== undefined && ps.tirs[0] !== null) totalThrowsCompleted++;
-      if (ps.tirs[1] !== undefined && ps.tirs[1] !== null) totalThrowsCompleted++;
+      if (ps.tirs[0] !== undefined && ps.tirs[0] !== null) {
+        totalThrowsCompleted++;
+      } else {
+        pouleThrowsDone = false;
+      }
+      if (ps.tirs[1] !== undefined && ps.tirs[1] !== null) {
+        totalThrowsCompleted++;
+      } else {
+        pouleThrowsDone = false;
+      }
     });
 
     const sorted = sortPoulePlayers(poule, playersMap);
-    if (sorted.some((s) => s.needsTieBreak)) {
+    const unresolvedCritical = sorted.filter((s) => s.needsTieBreak);
+    if (pouleThrowsDone && unresolvedCritical.length > 0) {
       hasPendingTieBreaks = true;
+      pendingTieBreakMessages.push(
+        `${poule.name} (${unresolvedCritical.length} joueurs à égalité pour la qualification)`
+      );
     }
   });
 
@@ -201,15 +215,17 @@ export const TabTour1: React.FC<TabTour1Props> = ({
 
       {/* Tie Break Alert Banner if needed */}
       {hasPendingTieBreaks && (
-        <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0" />
+        <div className="bg-amber-50 border border-amber-300 p-4 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-start sm:items-center gap-3">
+            <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 sm:mt-0" />
             <div>
               <div className="text-sm font-bold text-amber-900">
-                Égalité stricte détectée sur la ligne de qualification !
+                Égalité détectée sur la ligne de qualification !
               </div>
-              <div className="text-xs text-amber-700">
-                Certains joueurs à la {settings.round1QualifiersPerPool}ème place ont le même total. Renseignez un tir de barrage dans la colonne « Départage » pour désigner le qualifié.
+              <div className="text-xs text-amber-800 mt-0.5">
+                {pendingTieBreakMessages.length > 0
+                  ? `Poules concernées : ${pendingTieBreakMessages.join(' • ')}`
+                  : `Plusieurs joueurs sont à égalité pour la qualification. Renseignez un tir de barrage dans la colonne « Départage » pour chaque joueur concerné.`}
               </div>
             </div>
           </div>
@@ -394,20 +410,23 @@ export const TabTour1: React.FC<TabTour1Props> = ({
 
                             {/* Départage / Barrage */}
                             <td className="py-2 px-2 text-center">
-                              {item.needsTieBreak ? (
+                              {item.isTied || item.isCriticalTie || (item.scoreObj.tieBreakScore && item.scoreObj.tieBreakScore > 0) ? (
                                 <div className="flex items-center justify-center gap-1">
                                   <PinScoreInput
-                                    value={item.scoreObj.tieBreakScore || null}
+                                    value={item.scoreObj.tieBreakScore > 0 ? item.scoreObj.tieBreakScore : null}
                                     onChange={(val) =>
                                       onUpdateTieBreak(poule.id, item.scoreObj.playerId, val)
                                     }
                                     size="sm"
+                                    placeholder="-"
                                   />
+                                  {item.needsTieBreak && (
+                                    <span
+                                      className="inline-block w-2 h-2 rounded-full bg-amber-500 shrink-0 animate-ping"
+                                      title="Tir de barrage requis pour départager la qualification"
+                                    />
+                                  )}
                                 </div>
-                              ) : item.scoreObj.tieBreakScore ? (
-                                <span className="text-[10px] bg-gray-100 text-gray-800 font-bold px-1.5 py-0.5 rounded border border-gray-200">
-                                  +{item.scoreObj.tieBreakScore}
-                                </span>
                               ) : (
                                 <span className="text-gray-300">-</span>
                               )}
