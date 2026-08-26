@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Poule, Player, TournamentSettings } from '../types/tournament';
 import { sortPoulePlayers } from '../utils/tournamentLogic';
 import { exportSinglePouleToCSV, exportAllPoulesOfRoundToCSV } from '../utils/csvExport';
+import { exportPoulesToPdf } from '../utils/pdfExport';
 import { PinScoreInput } from './PinScoreInput';
 import {
   Layers,
@@ -11,6 +12,7 @@ import {
   Sparkles,
   Award,
   FileSpreadsheet,
+  FileText,
   Download,
 } from 'lucide-react';
 
@@ -108,13 +110,32 @@ export const TabTour2: React.FC<TabTour2Props> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
+              id="btn-export-pdf-tour2-all"
+              onClick={() =>
+                exportPoulesToPdf({
+                  title: 'Olympiades du Rampeau',
+                  roundNumber: 2,
+                  poules,
+                  playersMap,
+                  settings,
+                })
+              }
+              className="px-3 py-2 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-900 border border-rose-200 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Exporter et imprimer toutes les poules du Tour 2 en PDF (avec surlignage vert/rouge des qualifiés/éliminés)"
+            >
+              <FileText className="w-3.5 h-3.5 text-rose-600" />
+              <span>Exporter Toutes les Poules (PDF)</span>
+            </button>
+
+            <button
+              type="button"
               id="btn-export-csv-tour2-all"
               onClick={() => exportAllPoulesOfRoundToCSV(poules, 2, playersMap, 'Olympiades du rampeau')}
               className="px-3 py-2 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
               title="Exporter toutes les poules du Tour 2 dans un fichier CSV (avec joueurs et scores)"
             >
               <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Exporter Toutes les Poules (CSV)</span>
+              <span>Exporter (CSV)</span>
             </button>
 
             <button
@@ -280,10 +301,29 @@ export const TabTour2: React.FC<TabTour2Props> = ({
                     </span>
                     <h3 className="text-sm font-bold text-gray-900">{poule.name}</h3>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
                       Top {qualifyLimit} qualifiés T3
                     </span>
+                    <button
+                      type="button"
+                      id={`btn-export-pdf-poule-t2-${poule.id}`}
+                      onClick={() =>
+                        exportPoulesToPdf({
+                          title: 'Olympiades du Rampeau',
+                          roundNumber: 2,
+                          poules,
+                          playersMap,
+                          settings,
+                          singlePouleId: poule.id,
+                        })
+                      }
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white hover:bg-rose-50 text-rose-800 border border-rose-200 text-[11px] font-semibold transition-all shadow-2xs cursor-pointer hover:border-rose-300"
+                      title="Exporter et imprimer cette poule en PDF (avec surlignage vert/rouge)"
+                    >
+                      <FileText className="w-3 h-3 text-rose-600" />
+                      <span>PDF</span>
+                    </button>
                     <button
                       type="button"
                       id={`btn-export-poule-t2-${poule.id}`}
