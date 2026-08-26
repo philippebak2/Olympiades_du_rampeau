@@ -1,0 +1,8 @@
+{
+  "name": "Gestionnaire Tournoi Jeu de Quilles",
+  "description": "Application complète de gestion de tournois de jeu de quilles et bowling à 9 quilles avec gestion des poules, tours qualificatifs, phases finales et classement équipe en temps réel.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
