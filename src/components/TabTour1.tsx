@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Poule, Player, TournamentSettings } from '../types/tournament';
 import { sortPoulePlayers } from '../utils/tournamentLogic';
+import { exportSinglePouleToCSV, exportAllPoulesOfRoundToCSV } from '../utils/csvExport';
 import { PinScoreInput } from './PinScoreInput';
 import {
   Layers,
@@ -12,6 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   ShieldAlert,
+  FileSpreadsheet,
+  Download,
 } from 'lucide-react';
 
 interface TabTour1Props {
@@ -102,6 +105,17 @@ export const TabTour1: React.FC<TabTour1Props> = ({
 
           {/* Action buttons & progress */}
           <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              type="button"
+              id="btn-export-csv-tour1-all"
+              onClick={() => exportAllPoulesOfRoundToCSV(poules, 1, playersMap, 'Olympiades du rampeau')}
+              className="px-3 py-2 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Exporter toutes les poules du Tour 1 dans un fichier CSV (avec joueurs et scores)"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Exporter Toutes les Poules (CSV)</span>
+            </button>
+
             <button
               type="button"
               id="btn-simulate-tour1"
@@ -257,16 +271,28 @@ export const TabTour1: React.FC<TabTour1Props> = ({
                 className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden"
               >
                 {/* Poule Header */}
-                <div className="bg-gray-50/70 px-4 py-3 border-b border-gray-200 flex items-center justify-between">
+                <div className="bg-gray-50/70 px-4 py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
                     <span className="w-6 h-6 rounded-md bg-gray-900 text-white font-bold text-xs flex items-center justify-center shadow-2xs">
                       P{pIdx + 1}
                     </span>
                     <h3 className="text-sm font-bold text-gray-900">{poule.name}</h3>
                   </div>
-                  <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    Top {qualifyLimit} qualifiés pour le Tour 2
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
+                      Top {qualifyLimit} qualifiés T2
+                    </span>
+                    <button
+                      type="button"
+                      id={`btn-export-poule-${poule.id}`}
+                      onClick={() => exportSinglePouleToCSV(poule, playersMap, 'Olympiades du rampeau')}
+                      className="inline-flex items-center gap-1 px-2 py-1 rounded-md bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-semibold transition-all shadow-2xs cursor-pointer hover:border-emerald-300"
+                      title="Exporter cette poule avec noms et scores au format CSV"
+                    >
+                      <Download className="w-3 h-3 text-emerald-600" />
+                      <span>CSV</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Poule Table */}

@@ -31,6 +31,29 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
 
   const top3 = standings.slice(0, 3);
 
+  const handleExportCSV = () => {
+    const headers = ['Rang', 'Club / Équipe', 'Points Équipe', 'Nb Quilleurs', 'Total Quilles Abattues', 'En Lice', 'Éliminés'];
+    const rows = standings.map((team, idx) => [
+      idx + 1,
+      `"${team.teamName.replace(/"/g, '""')}"`,
+      team.totalPoints,
+      team.playerCount,
+      team.totalPins,
+      team.activePlayerCount,
+      team.eliminatedPlayerCount,
+    ]);
+
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\r\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.setAttribute('href', url);
+    link.setAttribute('download', `classement_equipes_olympiades_du_rampeau_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Header Banner */}
@@ -47,6 +70,19 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
             <p className="text-xs text-gray-600 max-w-3xl">
               Calcul automatique selon le barème officiel des performances individuelles accumulées par l'ensemble des quilleurs de chaque club tout au long de la compétition.
             </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              id="btn-export-teams-csv"
+              onClick={handleExportCSV}
+              className="px-3.5 py-2 rounded-lg bg-white hover:bg-emerald-50 text-emerald-800 border border-emerald-300 text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Exporter le classement par équipes au format CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Exporter Classement (CSV)</span>
+            </button>
           </div>
         </div>
 

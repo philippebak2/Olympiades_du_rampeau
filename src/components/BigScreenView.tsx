@@ -54,7 +54,7 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
       <div className="flex items-center justify-between pb-4 border-b border-gray-800">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-white text-gray-950 flex items-center justify-center font-bold text-lg shadow-sm">
-            9Q
+            OR
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-white">

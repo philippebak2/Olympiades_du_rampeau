@@ -121,19 +121,19 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Logo & Title */}
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gray-900 text-white flex items-center justify-center font-bold text-sm tracking-wider shrink-0 shadow-2xs">
-              9Q
+              OR
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-base font-bold text-gray-900 tracking-tight leading-tight">
-                  Gestionnaire Tournoi Jeu de Quilles
+                  Olympiades du rampeau
                 </h1>
-                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-gray-100 text-gray-700 border border-gray-200">
-                  9 Quilles
+                <span className="hidden sm:inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  9 Quilles / Rampeau
                 </span>
               </div>
               <p className="text-xs text-gray-500 flex items-center gap-1.5 mt-0.5">
-                <span>{tournament.title}</span>
+                <span>{tournament.title || 'Olympiades du rampeau'}</span>
                 <span>•</span>
                 <span className="font-medium text-gray-700">{tournament.players.length} quilleurs inscrits</span>
               </p>

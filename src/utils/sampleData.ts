@@ -82,9 +82,9 @@ export const DEFAULT_SETTINGS: TournamentSettings = {
 };
 
 export const INITIAL_TOURNAMENT_DATA: TournamentData = {
-  title: 'Grand Tournoi National de Jeu de Quilles',
+  title: 'Olympiades du rampeau',
   date: new Date().toISOString().split('T')[0],
-  location: 'Hall des Quilleurs',
+  location: 'Boulodrome / Quillier du Rampeau',
   players: [],
   settings: DEFAULT_SETTINGS,
   tour1Poules: [],

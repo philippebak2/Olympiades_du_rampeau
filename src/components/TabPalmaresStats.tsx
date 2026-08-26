@@ -179,8 +179,8 @@ export const TabPalmaresStats: React.FC<TabPalmaresStatsProps> = ({
     const rows = playerStatsList.map((p, idx) => [
       idx + 1,
       `#${p.player.id}`,
-      `"${p.player.name}"`,
-      `"${p.player.team}"`,
+      `"${p.player.name.replace(/"/g, '""')}"`,
+      `"${p.player.team.replace(/"/g, '""')}"`,
       p.t1Score,
       p.t2Score,
       p.t3Score,
@@ -188,15 +188,15 @@ export const TabPalmaresStats: React.FC<TabPalmaresStatsProps> = ({
       p.totalPins,
       p.throwCount,
       p.average,
-      `"${p.finalTitle}"`,
+      `"${p.finalTitle.replace(/"/g, '""')}"`,
     ]);
 
-    const csvContent = [headers.join(','), ...rows.map((r) => r.join(','))].join('\n');
+    const csvContent = '\uFEFF' + [headers.join(';'), ...rows.map((r) => r.join(';'))].join('\r\n');
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.setAttribute('href', url);
-    link.setAttribute('download', `palmares_tournoi_quilles_${new Date().toISOString().slice(0, 10)}.csv`);
+    link.setAttribute('download', `palmares_olympiades_du_rampeau_${new Date().toISOString().slice(0, 10)}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
