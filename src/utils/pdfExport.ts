@@ -376,3 +376,501 @@ export function exportPoulesToPdf({
   printWindow.document.close();
 }
 
+/**
+ * Options pour l'export des feuilles de marque destinées aux juges de piste
+ */
+export interface ExportJudgesSheetOptions {
+  title?: string;
+  roundNumber: 1 | 2 | 3;
+  poules: Poule[];
+  playersMap: Map<number, Player>;
+  settings?: TournamentSettings;
+  singlePouleId?: string;
+}
+
+/**
+ * Génère et déclenche l'impression d'une ou de toutes les feuilles de match / comptage de points
+ * pour les juges de piste sur le terrain (1 page A4 par poule, optimisée pour l'écriture au stylo).
+ */
+export function exportJudgesScoreSheetPDF({
+  title = 'Olympiades du Rampeau',
+  roundNumber = 1,
+  poules,
+  playersMap,
+  settings,
+  singlePouleId,
+}: ExportJudgesSheetOptions) {
+  const poulesToExport = singlePouleId
+    ? poules.filter((p) => p.id === singlePouleId)
+    : poules;
+
+  if (poulesToExport.length === 0) return;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("Veuillez autoriser l'ouverture des fenêtres pop-up pour générer la feuille de marque.");
+    return;
+  }
+
+  const currentDate = new Date().toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
+
+  const qualifyCount =
+    roundNumber === 1
+      ? settings?.round1QualifiersPerPool || 5
+      : roundNumber === 2
+      ? settings?.round2QualifiersPerPool || 5
+      : settings?.round3QualifiersPerPool || 4;
+
+  const roundLabel =
+    roundNumber === 1
+      ? 'TOUR 1 — QUALIFICATIONS INITIALES (2 TIRS)'
+      : roundNumber === 2
+      ? 'TOUR 2 — QUALIFICATIONS INTERMÉDIAIRES (1 TIR)'
+      : 'TOUR 3 — QUALIFICATIONS POUR LES FINALES (1 TIR)';
+
+  const nextPhaseLabel =
+    roundNumber === 1
+      ? 'le Tour 2'
+      : roundNumber === 2
+      ? 'le Tour 3'
+      : 'les 8èmes de Finale';
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Feuille de Marque - Juge de Piste - ${title}</title>
+  <style>
+    @page {
+      size: A4 landscape;
+      margin: 8mm 10mm 8mm 10mm;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 11.5px;
+    }
+    .sheet-wrapper {
+      page-break-after: always;
+      break-after: page;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 96vh;
+      padding-bottom: 8px;
+    }
+    .sheet-wrapper:last-child {
+      page-break-after: auto;
+      break-after: auto;
+    }
+    .header-banner {
+      border: 2px solid #0f172a;
+      border-radius: 8px;
+      padding: 10px 14px;
+      margin-bottom: 12px;
+      background: #f8fafc;
+    }
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1.5px solid #cbd5e1;
+      padding-bottom: 6px;
+      margin-bottom: 8px;
+    }
+    .tournament-title {
+      font-size: 16px;
+      font-weight: 900;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .doc-badge {
+      background: #0f172a;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 10px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: 1.3fr 1.3fr 1.4fr;
+      gap: 12px;
+      font-size: 11.5px;
+    }
+    .meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .meta-label {
+      font-weight: 700;
+      color: #475569;
+      text-transform: uppercase;
+      font-size: 10px;
+    }
+    .meta-value-box {
+      font-weight: 800;
+      font-size: 13px;
+      color: #0f172a;
+      background: #e2e8f0;
+      padding: 3px 8px;
+      border-radius: 4px;
+      display: inline-block;
+    }
+    .rule-box {
+      background: #ecfdf5;
+      border: 1px solid #a7f3d0;
+      color: #065f46;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .handwriting-line {
+      display: inline-block;
+      min-width: 140px;
+      border-bottom: 1.5px dashed #64748b;
+      margin-left: 4px;
+    }
+    
+    /* Table styling for handwriting */
+    .score-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 12px;
+    }
+    .score-table th {
+      background: #1e293b;
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      padding: 6px 4px;
+      border: 1px solid #0f172a;
+      text-align: center;
+    }
+    .score-table td {
+      border: 1.5px solid #64748b;
+      padding: 6px 4px;
+      font-size: 12px;
+      vertical-align: middle;
+    }
+    .score-table tbody tr:nth-child(even) {
+      background-color: #f8fafc;
+    }
+    .player-name-cell {
+      font-weight: 800;
+      font-size: 13px;
+      color: #0f172a;
+    }
+    .player-club-cell {
+      font-size: 11px;
+      color: #334155;
+      font-weight: 600;
+    }
+    
+    .score-input-box {
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 16px;
+    }
+    .box-grid {
+      border: 1px dashed #cbd5e1;
+      border-radius: 4px;
+      height: 28px;
+      width: 44px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+    }
+    .total-box {
+      border: 2px solid #0f172a;
+      background: #fffbeb;
+      font-weight: 900;
+      font-size: 16px;
+      color: #92400e;
+    }
+    .tie-box {
+      border: 1.5px dashed #d97706;
+      background: #fffbeb;
+    }
+    .checkbox-qualif {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 10.5px;
+      font-weight: 700;
+      margin: 0 4px;
+    }
+    .square-check {
+      width: 14px;
+      height: 14px;
+      border: 1.5px solid #0f172a;
+      border-radius: 2px;
+      display: inline-block;
+    }
+    
+    /* Footer */
+    .sheet-footer {
+      border: 1.5px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 12px;
+      background: #f8fafc;
+      font-size: 10.5px;
+      display: grid;
+      grid-template-columns: 1.6fr 1fr 1fr;
+      gap: 12px;
+      align-items: center;
+    }
+    .instructions-list {
+      margin: 0;
+      padding-left: 14px;
+      color: #334155;
+      font-size: 10px;
+      line-height: 1.35;
+    }
+    .sig-box {
+      border-left: 1.5px solid #cbd5e1;
+      padding-left: 12px;
+      font-size: 10.5px;
+    }
+    
+    @media print {
+      .no-print {
+        display: none !important;
+      }
+      body {
+        padding: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="no-print" style="background:#fef3c7; border:1px solid #f59e0b; padding:12px 18px; margin-bottom:16px; border-radius:8px; display:flex; justify-content:space-between; align-items:center;">
+    <div>
+      <div style="font-size:13px; font-weight:800; color:#92400e;">
+        📋 Feuille de Marque Officielle pour les Juges de Piste (Format Paysage / Imprimable)
+      </div>
+      <div style="font-size:11px; color:#b45309; margin-top:2px;">
+        Chaque poule est formatée pour tenir sur une seule page A4 avec une grille claire pour la saisie des points au stylo.
+      </div>
+    </div>
+    <button onclick="window.print()" style="background:#0f172a; color:#ffffff; font-weight:700; padding:8px 18px; border:none; border-radius:6px; cursor:pointer; font-size:12px;">
+      🖨️ Imprimer la / les feuille(s)
+    </button>
+  </div>
+
+  ${poulesToExport
+    .map((poule, pIndex) => {
+      const playersInPoule = poule.playerScores.map((ps) => {
+        const player = playersMap.get(ps.playerId);
+        return {
+          scoreObj: ps,
+          player,
+        };
+      });
+
+      return `
+      <div class="sheet-wrapper">
+        <div>
+          <!-- Header Banner -->
+          <div class="header-banner">
+            <div class="header-top">
+              <div>
+                <span class="tournament-title">${title}</span>
+                <span style="font-size:12px; font-weight:700; color:#475569; margin-left:8px;">• ${roundLabel}</span>
+              </div>
+              <div class="doc-badge">FEUILLE DE MARQUE — JUGE DE PISTE</div>
+            </div>
+            
+            <div class="meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Poule :</span>
+                <span class="meta-value-box">${poule.name}</span>
+                <span style="font-size:11px; font-weight:700; color:#475569; margin-left:6px;">(${playersInPoule.length} Joueurs)</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Piste N° :</span>
+                <span class="meta-value-box">Piste ${pIndex + 1}</span>
+                <span style="font-size:11px; font-weight:600; color:#475569; margin-left:6px;">Date : ${currentDate}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="rule-box">🎯 Objectif : Top ${poule.qualifyCount} qualifiés pour ${nextPhaseLabel}</span>
+              </div>
+            </div>
+
+            <div style="margin-top: 8px; display:flex; justify-content:space-between; font-size:11px;">
+              <div>
+                <span style="font-weight:700; color:#334155;">Juge / Arbitre de Piste :</span>
+                <span class="handwriting-line" style="min-width: 220px;"></span>
+              </div>
+              <div>
+                <span style="font-weight:700; color:#334155;">Heure début des tirs :</span>
+                <span class="handwriting-line" style="min-width: 80px;"></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Table de pointage pour l'arbitre -->
+          <table class="score-table">
+            <thead>
+              <tr>
+                <th style="width: 35px;">Ordre</th>
+                <th style="width: 50px;">Dossard</th>
+                <th style="text-align: left; padding-left: 8px;">Nom & Prénom du Quilleur</th>
+                <th style="text-align: left; padding-left: 8px; width: 140px;">Équipe / Club</th>
+                ${
+                  roundNumber === 1
+                    ? `
+                  <th style="width: 70px;">TIR 1<br><span style="font-size:8.5px; font-weight:normal;">(0 à 9)</span></th>
+                  <th style="width: 70px;">TIR 2<br><span style="font-size:8.5px; font-weight:normal;">(0 à 9)</span></th>
+                `
+                    : `
+                  <th style="width: 75px;">Cumul Préc.<br><span style="font-size:8.5px; font-weight:normal;">(Points)</span></th>
+                  <th style="width: 75px;">Tir du Tour<br><span style="font-size:8.5px; font-weight:normal;">(0 à 9)</span></th>
+                `
+                }
+                <th style="width: 80px;">TOTAL<br><span style="font-size:8.5px; font-weight:normal;">(Score final)</span></th>
+                <th style="width: 75px;">Départage<br><span style="font-size:8.5px; font-weight:normal;">(Barrage)</span></th>
+                <th style="width: 55px;">Rang<br><span style="font-size:8.5px; font-weight:normal;">(Poule)</span></th>
+                <th style="width: 110px;">Qualifié ?<br><span style="font-size:8.5px; font-weight:normal;">(Top ${poule.qualifyCount})</span></th>
+                <th style="width: 95px;">Émargement<br><span style="font-size:8.5px; font-weight:normal;">(Quilleur)</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              ${playersInPoule
+                .map((item, idx) => {
+                  const p = item.player;
+                  const pid = item.scoreObj.playerId;
+                  const t1Val = item.scoreObj.tirs[0] !== undefined && item.scoreObj.tirs[0] !== null ? item.scoreObj.tirs[0] : '';
+                  const t2Val = item.scoreObj.tirs[1] !== undefined && item.scoreObj.tirs[1] !== null ? item.scoreObj.tirs[1] : '';
+                  const tieVal = item.scoreObj.tieBreakScore && item.scoreObj.tieBreakScore > 0 ? item.scoreObj.tieBreakScore : '';
+                  const prevVal = item.scoreObj.previousCumulativeScore ?? 0;
+
+                  return `
+                  <tr>
+                    <td style="text-align: center; font-weight: 800; font-size: 13px; color: #475569;">${idx + 1}</td>
+                    <td style="text-align: center; font-weight: 900; font-size: 13px; color: #0f172a; background:#f1f5f9;">#${pid}</td>
+                    <td class="player-name-cell" style="padding-left: 8px;">
+                      ${p ? p.name : `Joueur #${pid}`}
+                    </td>
+                    <td class="player-club-cell" style="padding-left: 8px;">
+                      ${p?.team || '-'}
+                    </td>
+                    ${
+                      roundNumber === 1
+                        ? `
+                      <td style="text-align: center;">
+                        <div class="box-grid">${t1Val !== '' ? t1Val : '&nbsp;'}</div>
+                      </td>
+                      <td style="text-align: center;">
+                        <div class="box-grid">${t2Val !== '' ? t2Val : '&nbsp;'}</div>
+                      </td>
+                    `
+                        : `
+                      <td style="text-align: center; font-weight: 800; color: #475569; background:#f8fafc;">
+                        ${prevVal}
+                      </td>
+                      <td style="text-align: center;">
+                        <div class="box-grid">${t1Val !== '' ? t1Val : '&nbsp;'}</div>
+                      </td>
+                    `
+                    }
+                    <td style="text-align: center;">
+                      <div class="box-grid total-box">
+                        ${
+                          roundNumber === 1 && t1Val !== '' && t2Val !== ''
+                            ? Number(t1Val) + Number(t2Val)
+                            : '&nbsp;'
+                        }
+                      </div>
+                    </td>
+                    <td style="text-align: center;">
+                      <div class="box-grid tie-box">${tieVal !== '' ? `+${tieVal}` : '&nbsp;'}</div>
+                    </td>
+                    <td style="text-align: center; font-weight: 800; font-size: 13px;">
+                      <div class="box-grid" style="width: 32px;">&nbsp;</div>
+                    </td>
+                    <td style="text-align: center;">
+                      <span class="checkbox-qualif"><span class="square-check"></span> OUI</span>
+                      <span class="checkbox-qualif"><span class="square-check"></span> NON</span>
+                    </td>
+                    <td style="text-align: center; font-size: 9px; color: #94a3b8;">
+                      <div style="height: 24px;"></div>
+                    </td>
+                  </tr>
+                `;
+                })
+                .join('')}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Footer / Consignes & Signatures -->
+        <div class="sheet-footer">
+          <div>
+            <strong style="color: #0f172a; text-transform: uppercase; font-size: 10px;">📋 Instructions pour l'arbitre :</strong>
+            <ul class="instructions-list">
+              <li>Chaque quilleur réalise <strong>${roundNumber === 1 ? '2 tirs' : '1 tir'}</strong> (score max : 9 quilles par lancer).</li>
+              <li>En cas d'égalité stricte sur la dernière place qualificative (<strong>${qualifyCount}e place</strong>) : <strong>1 tir de barrage</strong> dans la case "Départage".</li>
+              <li>Faire émarger les quilleurs et rapporter immédiatement cette feuille à la table centrale.</li>
+            </ul>
+          </div>
+
+          <div class="sig-box">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 24px;">Signature du Juge de Piste :</div>
+            <div style="font-size: 9px; color: #64748b;">(Certifie l'exactitude des scores)</div>
+          </div>
+
+          <div class="sig-box">
+            <div style="font-weight: 700; color: #0f172a; margin-bottom: 24px;">Contrôle Table Centrale :</div>
+            <div style="font-size: 9px; color: #64748b;">Heure de remise : ___h___ | Visa : _____</div>
+          </div>
+        </div>
+      </div>
+    `;
+    })
+    .join('')}
+
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        window.print();
+      }, 400);
+    });
+  </script>
+</body>
+</html>
+`;
+
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+}
+
+

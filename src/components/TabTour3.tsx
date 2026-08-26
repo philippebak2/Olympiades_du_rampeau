@@ -2,7 +2,7 @@ import React from 'react';
 import { Poule, Player, TournamentSettings } from '../types/tournament';
 import { sortPoulePlayers } from '../utils/tournamentLogic';
 import { exportSinglePouleToCSV, exportAllPoulesOfRoundToCSV } from '../utils/csvExport';
-import { exportPoulesToPdf } from '../utils/pdfExport';
+import { exportPoulesToPdf, exportJudgesScoreSheetPDF } from '../utils/pdfExport';
 import { PinScoreInput } from './PinScoreInput';
 import {
   Layers,
@@ -13,6 +13,7 @@ import {
   Trophy,
   FileSpreadsheet,
   FileText,
+  ClipboardList,
   Download,
 } from 'lucide-react';
 
@@ -107,6 +108,25 @@ export const TabTour3: React.FC<TabTour3Props> = ({
           <div className="flex flex-wrap items-center gap-2.5">
             <button
               type="button"
+              id="btn-export-judges-tour3-all"
+              onClick={() =>
+                exportJudgesScoreSheetPDF({
+                  title: 'Olympiades du Rampeau',
+                  roundNumber: 3,
+                  poules,
+                  playersMap,
+                  settings,
+                })
+              }
+              className="px-3 py-2 rounded-lg bg-blue-50 hover:bg-blue-100 text-blue-950 border border-blue-200 text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs"
+              title="Générer les feuilles de marque officielles pour les juges de piste du Tour 3 (1 page A4 par poule)"
+            >
+              <ClipboardList className="w-4 h-4 text-blue-600" />
+              <span>Feuilles Juges de Piste (PDF)</span>
+            </button>
+
+            <button
+              type="button"
               id="btn-export-pdf-tour3-all"
               onClick={() =>
                 exportPoulesToPdf({
@@ -121,7 +141,7 @@ export const TabTour3: React.FC<TabTour3Props> = ({
               title="Exporter et imprimer toutes les poules du Tour 3 en PDF (avec surlignage vert/rouge des qualifiés/éliminés)"
             >
               <FileText className="w-3.5 h-3.5 text-rose-600" />
-              <span>Exporter Toutes les Poules (PDF)</span>
+              <span>Résultats Poules (PDF)</span>
             </button>
 
             <button
@@ -252,6 +272,25 @@ export const TabTour3: React.FC<TabTour3Props> = ({
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
                     {poule.qualifyCount} Qualifiés Finales
                   </span>
+                  <button
+                    type="button"
+                    id={`btn-export-judge-poule-t3-${poule.id}`}
+                    onClick={() =>
+                      exportJudgesScoreSheetPDF({
+                        title: 'Olympiades du Rampeau',
+                        roundNumber: 3,
+                        poules,
+                        playersMap,
+                        settings,
+                        singlePouleId: poule.id,
+                      })
+                    }
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-blue-50 hover:bg-blue-100 text-blue-900 border border-blue-200 text-[11px] font-bold transition-all shadow-2xs cursor-pointer hover:border-blue-300"
+                    title="Imprimer la feuille de marque pour le juge de piste de cette poule (Tour 3)"
+                  >
+                    <ClipboardList className="w-3 h-3 text-blue-600" />
+                    <span>Feuille Juge</span>
+                  </button>
                   <button
                     type="button"
                     id={`btn-export-pdf-poule-t3-${poule.id}`}
