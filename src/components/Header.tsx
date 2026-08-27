@@ -96,19 +96,11 @@ export const Header: React.FC<HeaderProps> = ({
       isAvailable: tournament.finalMatches.length > 0,
     },
     {
-      id: 'equipes',
-      label: '6. Classement Équipes',
-      sublabel: 'Points accumulés',
-      icon: Shield,
-      isActive: currentTab === 'equipes',
-      isAvailable: tournament.players.length > 0,
-    },
-    {
       id: 'stats',
-      label: '7. Palmarès & Bilan',
-      sublabel: 'Podium & Tous scores',
-      icon: Medal,
-      isActive: currentTab === 'stats',
+      label: '6. Classements & Bilan',
+      sublabel: 'Général, Dames, -18, Équipes',
+      icon: Trophy,
+      isActive: currentTab === 'stats' || currentTab === 'equipes',
       isAvailable: tournament.players.length > 0,
     },
   ];

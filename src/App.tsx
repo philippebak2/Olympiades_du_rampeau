@@ -26,8 +26,7 @@ import { TabTour1 } from './components/TabTour1';
 import { TabTour2 } from './components/TabTour2';
 import { TabTour3 } from './components/TabTour3';
 import { TabPhasesFinales } from './components/TabPhasesFinales';
-import { TabClassementEquipes } from './components/TabClassementEquipes';
-import { TabPalmaresStats } from './components/TabPalmaresStats';
+import { TabClassementsBilan } from './components/TabClassementsBilan';
 import { BigScreenView } from './components/BigScreenView';
 import { TournamentPipelineVisualizer } from './components/TournamentPipelineVisualizer';
 
@@ -717,15 +716,8 @@ export default function App() {
           />
         )}
 
-        {currentTab === 'equipes' && (
-          <TabClassementEquipes
-            tournament={tournament}
-            playersMap={playersMap}
-          />
-        )}
-
-        {currentTab === 'stats' && (
-          <TabPalmaresStats
+        {(currentTab === 'stats' || currentTab === 'equipes') && (
+          <TabClassementsBilan
             tournament={tournament}
             playersMap={playersMap}
           />

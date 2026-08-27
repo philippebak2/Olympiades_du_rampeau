@@ -1217,5 +1217,318 @@ export function exportPalmaresPDF({
   printWindow.document.close();
 }
 
+export interface ExportTeamStandingsPDFOptions {
+  title?: string;
+  standings: Array<{
+    teamName: string;
+    totalPoints: number;
+    playerCount: number;
+    activePlayerCount: number;
+    eliminatedPlayerCount: number;
+    totalPins: number;
+    players: Array<{
+      playerId: number;
+      playerName: string;
+      points: number;
+      stageReached: string;
+      isEliminated: boolean;
+      totalPinsKnocked: number;
+    }>;
+  }>;
+}
+
+/**
+ * Exporte le classement officiel par équipes / clubs en PDF A4.
+ */
+export function exportTeamStandingsPDF({
+  title = 'Olympiades du Rampeau',
+  standings,
+}: ExportTeamStandingsPDFOptions) {
+  if (standings.length === 0) return;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("Veuillez autoriser l'ouverture des fenêtres pop-up pour imprimer le classement des équipes.");
+    return;
+  }
+
+  const currentDate = new Date().toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const podium = standings.slice(0, 3);
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>${title} - Classement par Équipes</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm 10mm 12mm;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 11px;
+    }
+    .header {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .main-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      margin: 0 0 2px 0;
+    }
+    .sub-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0284c7;
+      margin: 0;
+    }
+    .meta-info {
+      text-align: right;
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    .podium-section {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: flex-end;
+    }
+    .podium-box {
+      border-radius: 8px;
+      padding: 8px 12px;
+      text-align: center;
+      flex: 1;
+      max-width: 180px;
+      border: 1px solid #cbd5e1;
+    }
+    .podium-1 {
+      background: #f8fafc;
+      border: 2px solid #0f172a;
+      order: 2;
+      padding: 12px;
+    }
+    .podium-2 {
+      background: #f1f5f9;
+      order: 1;
+    }
+    .podium-3 {
+      background: #fef3c7;
+      border-color: #fde68a;
+      order: 3;
+    }
+    .podium-medal {
+      font-size: 13px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .podium-name {
+      font-size: 13px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+    .podium-score {
+      display: inline-block;
+      margin-top: 4px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 8.5px;
+      letter-spacing: 0.5px;
+      padding: 6px 8px;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      text-align: left;
+    }
+    td {
+      padding: 5px 8px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+    }
+    tr.top1 {
+      background-color: #ecfdf5;
+      font-weight: 700;
+    }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 22px;
+      height: 20px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 10px;
+      background: #e2e8f0;
+    }
+    .rank-1 { background: #0f172a; color: #fff; }
+    .rank-2 { background: #94a3b8; color: #fff; }
+    .rank-3 { background: #d97706; color: #fff; }
+
+    .bareme-box {
+      margin-top: 14px;
+      padding: 8px 10px;
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      font-size: 8.5px;
+      color: #475569;
+    }
+
+    .footer {
+      margin-top: 15px;
+      padding-top: 6px;
+      border-top: 1px solid #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8.5px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 class="main-title">${title}</h1>
+      <h2 class="sub-title">🛡️ Classement Général par Équipes (Clubs)</h2>
+    </div>
+    <div class="meta-info">
+      <div>Édité le : <strong>${currentDate}</strong></div>
+      <div>Total : <strong>${standings.length} clubs participants</strong></div>
+    </div>
+  </div>
+
+  ${podium.length >= 2 ? `
+  <div class="podium-section">
+    ${podium[1] ? `
+      <div class="podium-box podium-2">
+        <div class="podium-medal">🥈 2ème Club</div>
+        <div class="podium-name">${podium[1].teamName}</div>
+        <div class="podium-score">${podium[1].totalPoints} pts</div>
+        <div style="font-size: 9px; color: #64748b; margin-top: 2px;">${podium[1].playerCount} quilleurs • ${podium[1].totalPins} quilles</div>
+      </div>
+    ` : ''}
+
+    ${podium[0] ? `
+      <div class="podium-box podium-1">
+        <div class="podium-medal">🥇 1er Club Vainqueur</div>
+        <div class="podium-name">${podium[0].teamName}</div>
+        <div class="podium-score">${podium[0].totalPoints} pts</div>
+        <div style="font-size: 9px; color: #64748b; margin-top: 2px;">${podium[0].playerCount} quilleurs • ${podium[0].totalPins} quilles</div>
+      </div>
+    ` : ''}
+
+    ${podium[2] ? `
+      <div class="podium-box podium-3">
+        <div class="podium-medal">🥉 3ème Club</div>
+        <div class="podium-name">${podium[2].teamName}</div>
+        <div class="podium-score" style="background: #92400e;">${podium[2].totalPoints} pts</div>
+        <div style="font-size: 9px; color: #64748b; margin-top: 2px;">${podium[2].playerCount} quilleurs • ${podium[2].totalPins} quilles</div>
+      </div>
+    ` : ''}
+  </div>
+  ` : ''}
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 45px; text-align: center;">Rang</th>
+        <th>Club / Équipe</th>
+        <th style="width: 70px; text-align: center; font-weight: 800;">Points</th>
+        <th style="width: 75px; text-align: center;">Nb Quilleurs</th>
+        <th style="width: 90px; text-align: center;">Quilles Abattues</th>
+        <th style="width: 75px; text-align: center;">En Lice</th>
+        <th style="width: 75px; text-align: center;">Éliminés</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${standings.map((team, idx) => {
+        const r = idx + 1;
+        const rowClass = r === 1 ? 'top1' : '';
+        const rankClass = r === 1 ? 'rank-1' : r === 2 ? 'rank-2' : r === 3 ? 'rank-3' : '';
+
+        return `
+          <tr class="${rowClass}">
+            <td style="text-align: center;">
+              <span class="rank-badge ${rankClass}">${r}</span>
+            </td>
+            <td style="font-weight: 700; font-size: 11px; color: #0f172a;">${team.teamName}</td>
+            <td style="text-align: center; font-weight: 800; font-size: 12px; color: #0f172a;">${team.totalPoints} pts</td>
+            <td style="text-align: center;">${team.playerCount}</td>
+            <td style="text-align: center; font-family: monospace; font-weight: 600;">${team.totalPins}</td>
+            <td style="text-align: center; color: #059669; font-weight: 600;">${team.activePlayerCount}</td>
+            <td style="text-align: center; color: #64748b;">${team.eliminatedPlayerCount}</td>
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  </table>
+
+  <div class="bareme-box">
+    <strong>Barème des points par quilleur :</strong> Tour 1 (1 pt) • Tour 2 (2 pts) • Tour 3 (3 pts) • 8èmes (4 pts) • 1/4 & 4e place (5 pts) • 3ème Bronze (6 pts) • 2ème Argent (7 pts) • 1er Champion (8 pts).
+  </div>
+
+  <div class="footer">
+    <div>Olympiades du Rampeau • Jeu traditionnel de quilles de 9</div>
+    <div>Document officiel du tournoi — Page 1 / 1</div>
+  </div>
+
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        window.print();
+      }, 400);
+    });
+  </script>
+</body>
+</html>
+`;
+
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+}
+
 
 
