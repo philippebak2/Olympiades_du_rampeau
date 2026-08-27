@@ -162,7 +162,7 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
               activeView === 'teams' ? 'bg-white text-gray-950' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
             }`}
           >
-            Classement Clubs
+            Classement Équipes
           </button>
           <button
             type="button"

@@ -26,7 +26,7 @@ function downloadCSVFile(csvContent: string, filename: string) {
 }
 
 /**
- * Exporte une poule individuelle au format CSV avec noms, clubs, tirs et scores
+ * Exporte une poule individuelle au format CSV avec noms, équipes, tirs et scores
  */
 export function exportSinglePouleToCSV(
   poule: Poule,
@@ -53,7 +53,7 @@ export function exportSinglePouleToCSV(
       'Rang',
       'N° Joueur',
       'Nom & Prénom',
-      'Club / Équipe',
+      'Équipe',
       'Tir 1 (/9)',
       'Tir 2 (/9)',
       'Total Tour 1 (/18)',
@@ -65,7 +65,7 @@ export function exportSinglePouleToCSV(
       'Rang',
       'N° Joueur',
       'Nom & Prénom',
-      'Club / Équipe',
+      'Équipe',
       'Cumul Tour 1',
       'Tir Tour 2 (/9)',
       'Total Cumulé (T1+T2)',
@@ -77,7 +77,7 @@ export function exportSinglePouleToCSV(
       'Rang',
       'N° Joueur',
       'Nom & Prénom',
-      'Club / Équipe',
+      'Équipe',
       'Cumul (T1+T2)',
       'Tir Tour 3 (/9)',
       'Total Général (T1+T2+T3)',
@@ -89,7 +89,7 @@ export function exportSinglePouleToCSV(
       'Rang',
       'N° Joueur',
       'Nom & Prénom',
-      'Club / Équipe',
+      'Équipe',
       'Tirs',
       'Total',
       'Départage',
@@ -201,7 +201,7 @@ export function exportAllPoulesOfRoundToCSV(
         'Rang',
         'N° Joueur',
         'Nom & Prénom',
-        'Club / Équipe',
+        'Équipe',
         'Tir 1 (/9)',
         'Tir 2 (/9)',
         'Total Tour 1 (/18)',
@@ -214,7 +214,7 @@ export function exportAllPoulesOfRoundToCSV(
         'Rang',
         'N° Joueur',
         'Nom & Prénom',
-        'Club / Équipe',
+        'Équipe',
         'Cumul T1',
         'Tir T2 (/9)',
         'Cumul Total (T1+T2)',
@@ -227,7 +227,7 @@ export function exportAllPoulesOfRoundToCSV(
         'Rang',
         'N° Joueur',
         'Nom & Prénom',
-        'Club / Équipe',
+        'Équipe',
         'Cumul (T1+T2)',
         'Tir T3 (/9)',
         'Cumul Général (T1+T2+T3)',

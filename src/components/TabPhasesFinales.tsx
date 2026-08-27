@@ -335,7 +335,7 @@ export const TabPhasesFinales: React.FC<TabPhasesFinalesProps> = ({
               #{championPlayer.id} {championPlayer.name}
             </h3>
             <div className="text-sm font-semibold text-gray-600">
-              Club : {championPlayer.team || 'Individuel'} (+8 points au classement club)
+              Équipe : {championPlayer.team || 'Individuel'} (+8 points au classement par équipes)
             </div>
 
             {/* Mini Podium Summary */}

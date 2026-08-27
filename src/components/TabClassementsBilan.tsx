@@ -281,7 +281,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
       case 'juniors':
         return 'Classement Juniors (< 18 ans)';
       case 'teams':
-        return 'Classement Général par Équipes (Clubs)';
+        return 'Classement Général par Équipes';
       case 'men':
         return 'Classement Hommes (Messieurs)';
       case 'all_podiums':
@@ -335,7 +335,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
 
   const handleExportCSV = () => {
     if (activeCategory === 'teams') {
-      const headers = ['Rang', 'Club / Équipe', 'Points Équipe', 'Nb Quilleurs', 'Total Quilles Abattues', 'En Lice', 'Éliminés'];
+      const headers = ['Rang', 'Équipe', 'Points Équipe', 'Nb Quilleurs', 'Total Quilles Abattues', 'En Lice', 'Éliminés'];
       const rows = teamStandings.map((team, idx) => [
         idx + 1,
         `"${team.teamName.replace(/"/g, '""')}"`,
@@ -379,7 +379,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
       'Nom',
       'Genre',
       'Moins de 18 ans',
-      'Club / Équipe',
+      'Équipe',
       'Tour 1',
       'Tour 2',
       'Tour 3',
@@ -438,7 +438,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
             </h2>
             <p className="text-xs text-gray-600 max-w-3xl">
               Consultez l'ensemble des classements officiels : <strong>Général (Scratch)</strong>,{' '}
-              <strong>Féminin</strong>, <strong>Juniors (&lt; 18 ans)</strong>, <strong>Équipes (Clubs)</strong> et la synthèse de tous les podiums.
+              <strong>Féminin</strong>, <strong>Juniors (&lt; 18 ans)</strong>, <strong>Équipes</strong> et la synthèse de tous les podiums.
             </p>
           </div>
 
@@ -529,7 +529,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
           }`}
         >
           <Shield className="w-4 h-4" />
-          <span>Classement par Équipes (Clubs)</span>
+          <span>Classement par Équipes</span>
           <span className={`px-1.5 py-0.2 rounded-full text-[10px] ${activeCategory === 'teams' ? 'bg-blue-700 text-white' : 'bg-blue-200 text-blue-900 font-bold'}`}>
             {teamStandings.length}
           </span>
@@ -579,13 +579,13 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
 
         <div className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-2xs">
           <div className="text-[11px] font-medium text-gray-500 uppercase tracking-wider">
-            Clubs & Équipes
+            Équipes
           </div>
           <div className="text-xl font-bold text-gray-900 mt-1">
             {teamStandings.length}
           </div>
           <div className="text-[10px] text-gray-500 mt-0.5">
-            Clubs en compétition
+            Équipes en compétition
           </div>
         </div>
 
@@ -639,18 +639,18 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
       </div>
 
       {/* ========================================================================= */}
-      {/* 1. VUE CLASSEMENT PAR ÉQUIPES (CLUBS) */}
+      {/* 1. VUE CLASSEMENT PAR ÉQUIPES */}
       {/* ========================================================================= */}
       {activeCategory === 'teams' && (
         <div className="space-y-6">
-          {/* Top 3 Clubs Podium Cards */}
+          {/* Top 3 Teams Podium Cards */}
           {teamPodium.length > 0 && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {teamPodium.map((team, idx) => {
                 const medals = [
-                  { color: 'border-gray-900 bg-white', badge: 'bg-gray-900 text-white', label: '1er Club Vainqueur (Or)', icon: Trophy },
-                  { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '2ème Club (Argent)', icon: Medal },
-                  { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '3ème Club (Bronze)', icon: Medal },
+                  { color: 'border-gray-900 bg-white', badge: 'bg-gray-900 text-white', label: '1ère Équipe Vainqueur (Or)', icon: Trophy },
+                  { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '2ème Équipe (Argent)', icon: Medal },
+                  { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '3ème Équipe (Bronze)', icon: Medal },
                 ];
                 const meta = medals[idx];
                 const Icon = meta.icon;
@@ -739,14 +739,14 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Rechercher un club ou un quilleur..."
+                placeholder="Rechercher une équipe ou un quilleur..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900"
               />
             </div>
             <div className="text-xs text-gray-500">
-              {filteredTeamList.length} club(s)
+              {filteredTeamList.length} équipe(s)
             </div>
           </div>
 
@@ -757,7 +757,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
                 <thead className="bg-gray-50 text-gray-600 text-[11px] uppercase tracking-wider font-semibold border-b border-gray-200">
                   <tr>
                     <th className="py-3 px-4 w-16 text-center">Rang</th>
-                    <th className="py-3 px-4">Club / Équipe</th>
+                    <th className="py-3 px-4">Équipe</th>
                     <th className="py-3 px-4 text-center font-bold text-gray-900">Total Points</th>
                     <th className="py-3 px-4 text-center">Quilleurs</th>
                     <th className="py-3 px-4 text-center">Quilles Abattues</th>
@@ -1050,28 +1050,28 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
             </div>
           </div>
 
-          {/* 4. Podium par Équipes (Clubs) */}
+          {/* 4. Podium par Équipes */}
           <div className="bg-white rounded-xl border border-blue-200 p-5 shadow-xs">
             <div className="flex items-center justify-between pb-3 border-b border-blue-100 mb-4">
               <div className="flex items-center gap-2 text-blue-700">
                 <Shield className="w-4 h-4" />
-                <h3 className="text-sm font-bold text-blue-950">Podium Inter-Clubs (Classement par Équipes)</h3>
+                <h3 className="text-sm font-bold text-blue-950">Podium du Classement par Équipes</h3>
               </div>
               <button
                 type="button"
                 onClick={() => setActiveCategory('teams')}
                 className="text-xs font-semibold text-blue-700 hover:text-blue-900"
               >
-                Voir le classement complet des {teamStandings.length} clubs →
+                Voir le classement complet des {teamStandings.length} équipes →
               </button>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {teamPodium.map((team, idx) => {
                 const medals = [
-                  { label: '🥇 1er Club Vainqueur', badge: 'bg-blue-600 text-white' },
-                  { label: '🥈 2ème Club', badge: 'bg-blue-100 text-blue-900 border border-blue-200' },
-                  { label: '🥉 3ème Club', badge: 'bg-blue-50 text-blue-800 border border-blue-200' },
+                  { label: '🥇 1ère Équipe Vainqueur', badge: 'bg-blue-600 text-white' },
+                  { label: '🥈 2ème Équipe', badge: 'bg-blue-100 text-blue-900 border border-blue-200' },
+                  { label: '🥉 3ème Équipe', badge: 'bg-blue-50 text-blue-800 border border-blue-200' },
                 ];
                 const meta = medals[idx];
                 return (
@@ -1191,7 +1191,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
               <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
               <input
                 type="text"
-                placeholder="Rechercher un quilleur par nom, numéro ou club..."
+                placeholder="Rechercher un quilleur par nom, numéro ou équipe..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full pl-9 pr-4 py-1.5 text-xs rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-900"
@@ -1214,7 +1214,7 @@ export const TabClassementsBilan: React.FC<TabClassementsBilanProps> = ({
                     )}
                     <th className="py-3 px-4 w-16 text-center">Dossard</th>
                     <th className="py-3 px-4">Quilleur</th>
-                    <th className="py-3 px-4">Club / Équipe</th>
+                    <th className="py-3 px-4">Équipe</th>
                     <th className="py-3 px-3 text-center">Catégorie</th>
                     <th className="py-3 px-3 text-center">Tour 1</th>
                     <th className="py-3 px-3 text-center">Tour 2</th>

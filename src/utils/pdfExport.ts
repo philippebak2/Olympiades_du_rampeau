@@ -278,7 +278,7 @@ export function exportPoulesToPdf({
             <tr>
               <th style="width: 45px; text-align: center;">Rang</th>
               <th>N° & Quilleur</th>
-              <th>Équipe / Club</th>
+              <th>Équipe</th>
               ${
                 roundNumber === 1
                   ? `
@@ -581,7 +581,7 @@ export function exportJudgesScoreSheetPDF({
       font-size: 13px;
       color: #0f172a;
     }
-    .player-club-cell {
+    .player-team-cell {
       font-size: 11px;
       color: #334155;
       font-weight: 600;
@@ -743,7 +743,7 @@ export function exportJudgesScoreSheetPDF({
                 <th style="width: 35px;">Ordre</th>
                 <th style="width: 50px;">Dossard</th>
                 <th style="text-align: left; padding-left: 8px;">Nom & Prénom du Quilleur</th>
-                <th style="text-align: left; padding-left: 8px; width: 140px;">Équipe / Club</th>
+                <th style="text-align: left; padding-left: 8px; width: 140px;">Équipe</th>
                 ${
                   roundNumber === 1
                     ? `
@@ -779,7 +779,7 @@ export function exportJudgesScoreSheetPDF({
                     <td class="player-name-cell" style="padding-left: 8px;">
                       ${p ? p.name : `Joueur #${pid}`}
                     </td>
-                    <td class="player-club-cell" style="padding-left: 8px;">
+                    <td class="player-team-cell" style="padding-left: 8px;">
                       ${p?.team || '-'}
                     </td>
                     ${
@@ -1150,7 +1150,7 @@ export function exportPalmaresPDF({
         <th style="width: 40px; text-align: center;">N°</th>
         <th>Nom et Prénom</th>
         ${showCategoryColumn ? '<th style="width: 60px; text-align: center;">Catégorie</th>' : ''}
-        <th>Club / Équipe</th>
+        <th>Équipe</th>
         <th style="width: 40px; text-align: center;">T1</th>
         <th style="width: 40px; text-align: center;">T2</th>
         <th style="width: 40px; text-align: center;">T3</th>
@@ -1238,7 +1238,7 @@ export interface ExportTeamStandingsPDFOptions {
 }
 
 /**
- * Exporte le classement officiel par équipes / clubs en PDF A4.
+ * Exporte le classement officiel par équipes en PDF A4.
  */
 export function exportTeamStandingsPDF({
   title = 'Olympiades du Rampeau',
@@ -1431,11 +1431,11 @@ export function exportTeamStandingsPDF({
   <div class="header">
     <div>
       <h1 class="main-title">${title}</h1>
-      <h2 class="sub-title">🛡️ Classement Général par Équipes (Clubs)</h2>
+      <h2 class="sub-title">🛡️ Classement Général par Équipes</h2>
     </div>
     <div class="meta-info">
       <div>Édité le : <strong>${currentDate}</strong></div>
-      <div>Total : <strong>${standings.length} clubs participants</strong></div>
+      <div>Total : <strong>${standings.length} équipes participantes</strong></div>
     </div>
   </div>
 
@@ -1443,7 +1443,7 @@ export function exportTeamStandingsPDF({
   <div class="podium-section">
     ${podium[1] ? `
       <div class="podium-box podium-2">
-        <div class="podium-medal">🥈 2ème Club</div>
+        <div class="podium-medal">🥈 2ème Équipe</div>
         <div class="podium-name">${podium[1].teamName}</div>
         <div class="podium-score">${podium[1].totalPoints} pts</div>
         <div style="font-size: 9px; color: #64748b; margin-top: 2px;">${podium[1].playerCount} quilleurs • ${podium[1].totalPins} quilles</div>
@@ -1452,7 +1452,7 @@ export function exportTeamStandingsPDF({
 
     ${podium[0] ? `
       <div class="podium-box podium-1">
-        <div class="podium-medal">🥇 1er Club Vainqueur</div>
+        <div class="podium-medal">🥇 1ère Équipe Vainqueur</div>
         <div class="podium-name">${podium[0].teamName}</div>
         <div class="podium-score">${podium[0].totalPoints} pts</div>
         <div style="font-size: 9px; color: #64748b; margin-top: 2px;">${podium[0].playerCount} quilleurs • ${podium[0].totalPins} quilles</div>
@@ -1461,7 +1461,7 @@ export function exportTeamStandingsPDF({
 
     ${podium[2] ? `
       <div class="podium-box podium-3">
-        <div class="podium-medal">🥉 3ème Club</div>
+        <div class="podium-medal">🥉 3ème Équipe</div>
         <div class="podium-name">${podium[2].teamName}</div>
         <div class="podium-score" style="background: #92400e;">${podium[2].totalPoints} pts</div>
         <div style="font-size: 9px; color: #64748b; margin-top: 2px;">${podium[2].playerCount} quilleurs • ${podium[2].totalPins} quilles</div>
@@ -1474,7 +1474,7 @@ export function exportTeamStandingsPDF({
     <thead>
       <tr>
         <th style="width: 45px; text-align: center;">Rang</th>
-        <th>Club / Équipe</th>
+        <th>Équipe</th>
         <th style="width: 70px; text-align: center; font-weight: 800;">Points</th>
         <th style="width: 75px; text-align: center;">Nb Quilleurs</th>
         <th style="width: 90px; text-align: center;">Quilles Abattues</th>

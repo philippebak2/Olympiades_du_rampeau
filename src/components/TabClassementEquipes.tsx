@@ -32,7 +32,7 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
   const top3 = standings.slice(0, 3);
 
   const handleExportCSV = () => {
-    const headers = ['Rang', 'Club / Équipe', 'Points Équipe', 'Nb Quilleurs', 'Total Quilles Abattues', 'En Lice', 'Éliminés'];
+    const headers = ['Rang', 'Équipe', 'Points Équipe', 'Nb Quilleurs', 'Total Quilles Abattues', 'En Lice', 'Éliminés'];
     const rows = standings.map((team, idx) => [
       idx + 1,
       `"${team.teamName.replace(/"/g, '""')}"`,
@@ -62,13 +62,13 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
           <div className="space-y-1.5">
             <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-gray-100 text-gray-800 text-xs font-semibold border border-gray-200">
               <Shield className="w-3.5 h-3.5 text-gray-600" />
-              <span>Classement Général Inter-Clubs en Temps Réel</span>
+              <span>Classement Général par Équipes en Temps Réel</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-gray-900">
-              Classement par Équipes / Clubs ({standings.length} Clubs)
+              Classement par Équipes ({standings.length} Équipes)
             </h2>
             <p className="text-xs text-gray-600 max-w-3xl">
-              Calcul automatique selon le barème officiel des performances individuelles accumulées par l'ensemble des quilleurs de chaque club tout au long de la compétition.
+              Calcul automatique selon le barème officiel des performances individuelles accumulées par l'ensemble des quilleurs de chaque équipe tout au long de la compétition.
             </p>
           </div>
 
@@ -123,14 +123,14 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
         </div>
       </div>
 
-      {/* Top 3 Clubs Podium Cards */}
+      {/* Top 3 Teams Podium Cards */}
       {top3.length > 0 && (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {top3.map((team, idx) => {
             const medals = [
-              { color: 'border-gray-900 bg-white', badge: 'bg-gray-900 text-white', label: '1er Club (Or)', icon: Trophy },
-              { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '2ème Club (Argent)', icon: Medal },
-              { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '3ème Club (Bronze)', icon: Medal },
+              { color: 'border-gray-900 bg-white', badge: 'bg-gray-900 text-white', label: '1ère Équipe (Or)', icon: Trophy },
+              { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '2ème Équipe (Argent)', icon: Medal },
+              { color: 'border-gray-200 bg-white', badge: 'bg-gray-100 text-gray-700 border border-gray-200', label: '3ème Équipe (Bronze)', icon: Medal },
             ];
             const meta = medals[idx];
             const Icon = meta.icon;
@@ -187,7 +187,7 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
             <span>Tableau Complet du Classement par Équipes</span>
           </h3>
           <span className="text-xs text-gray-500">
-            Cliquez sur une ligne pour voir les quilleurs de chaque club
+            Cliquez sur une ligne pour voir les quilleurs de chaque équipe
           </span>
         </div>
 
@@ -201,7 +201,7 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
               <thead className="bg-gray-50/50 text-gray-600 font-bold uppercase text-[10px] tracking-wider border-b border-gray-200">
                 <tr>
                   <th className="py-3 px-4 w-16 text-center">Rang</th>
-                  <th className="py-3 px-4">Club / Équipe</th>
+                  <th className="py-3 px-4">Équipe</th>
                   <th className="py-3 px-3 text-center w-24">Quilleurs</th>
                   <th className="py-3 px-3 text-center w-28">En lice / Éliminés</th>
                   <th className="py-3 px-3 text-center w-28">Total Quilles</th>
@@ -243,7 +243,7 @@ export const TabClassementEquipes: React.FC<TabClassementEquipesProps> = ({
                           </span>
                         </td>
 
-                        {/* Nom du Club */}
+                        {/* Nom de l'Équipe */}
                         <td className="py-3 px-4">
                           <div className="font-semibold text-gray-900 text-sm">
                             {team.teamName}

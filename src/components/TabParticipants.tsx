@@ -458,7 +458,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
 
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-1">
-                  Club / Équipe (pour classement équipes)
+                  Équipe (pour classement par équipes)
                 </label>
                 <input
                   type="text"
@@ -665,7 +665,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                     onChange={(e) => setFilterTeam(e.target.value)}
                     className="text-xs bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 max-w-[140px]"
                   >
-                    <option value="ALL">Tous les clubs</option>
+                    <option value="ALL">Toutes les équipes</option>
                     {uniqueTeams.map((team) => (
                       <option key={team} value={team}>
                         {team}
@@ -702,7 +702,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                       <th className="py-2.5 px-3 w-14 text-center">N°</th>
                       <th className="py-2.5 px-3">Nom et Prénom</th>
                       <th className="py-2.5 px-3 w-28 text-center">Catégorie</th>
-                      <th className="py-2.5 px-3">Club / Équipe</th>
+                      <th className="py-2.5 px-3">Équipe</th>
                       <th className="py-2.5 px-3 w-20 text-right">Actions</th>
                     </tr>
                   </thead>
@@ -783,7 +783,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                             )}
                           </td>
 
-                          {/* Club */}
+                          {/* Équipe */}
                           <td className="py-2.5 px-3 text-gray-600">
                             {isEditing ? (
                               <input
@@ -869,10 +869,10 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
             </div>
 
             <p className="text-xs text-gray-600">
-              Collez votre liste de participants (1 par ligne). Vous pouvez inclure le club, le genre (H/F) et &lt;18 ans séparés par des virgules :
+              Collez votre liste de participants (1 par ligne). Vous pouvez inclure l'équipe, le genre (H/F) et &lt;18 ans séparés par des virgules :
               <br />
               <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-[11px] block mt-1">
-                Marie Curie, BC Colmar, F, U18<br />
+                Marie Curie, Équipe de Colmar, F, U18<br />
                 Jean Dupont, Quilleurs de Strasbourg, H
               </code>
             </p>
@@ -882,7 +882,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
               rows={8}
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
-              placeholder={`Pierre Martin, BC Colmar, H\nMarie Lefebvre, AS Quilles Mulhouse, F\nLucas Petit, Quilleurs de Strasbourg, H, U18\n...`}
+              placeholder={`Pierre Martin, Équipe de Colmar, H\nMarie Lefebvre, AS Quilles Mulhouse, F\nLucas Petit, Quilleurs de Strasbourg, H, U18\n...`}
               className="w-full p-3 text-xs border border-gray-300 rounded-xl font-mono focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 outline-none"
             />
 

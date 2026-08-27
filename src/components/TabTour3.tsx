@@ -101,7 +101,7 @@ export const TabTour3: React.FC<TabTour3Props> = ({
             <p className="text-xs text-gray-600 max-w-3xl">
               Chaque quilleur tire 1 fois sur 9 quilles. Le total général cumulé (T1 + T2 + T3) détermine le classement. Les{' '}
               <strong className="text-emerald-700 font-bold">{settings.round3QualifiersPerPool} premiers de chaque poule</strong> (soit {totalQualifsFinales} quilleurs) accèdent aux phases finales en élimination directe. Les éliminés marquent{' '}
-              <strong>3 points</strong> pour leur club.
+              <strong>3 points</strong> pour leur équipe.
             </p>
           </div>
 
@@ -380,7 +380,7 @@ export const TabTour3: React.FC<TabTour3Props> = ({
                                   {player?.name || `Joueur #${item.scoreObj.playerId}`}
                                 </div>
                                 <div className="text-[10px] text-gray-500">
-                                  {player?.team || 'Sans club'}
+                                  {player?.team || 'Sans équipe'}
                                 </div>
                               </div>
                             </div>

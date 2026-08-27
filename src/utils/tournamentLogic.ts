@@ -769,7 +769,7 @@ export function calculateTeamStandings(
   const teamsMap = new Map<string, TeamStanding>();
 
   tournament.players.forEach((p) => {
-    const teamName = p.team?.trim() || 'Individuel / Sans club';
+    const teamName = p.team?.trim() || 'Individuel / Sans équipe';
     if (!teamsMap.has(teamName)) {
       teamsMap.set(teamName, {
         teamName,

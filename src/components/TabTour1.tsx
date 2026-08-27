@@ -117,7 +117,7 @@ export const TabTour1: React.FC<TabTour1Props> = ({
                 {settings.round1QualifiersPerPool} premiers de chaque poule
               </strong>{' '}
               se qualifient pour le Tour 2. Les quilleurs éliminés marquent{' '}
-              <strong>1 point</strong> pour leur club.
+              <strong>1 point</strong> pour leur équipe.
             </p>
           </div>
 
@@ -435,7 +435,7 @@ export const TabTour1: React.FC<TabTour1Props> = ({
                               </span>
                             </td>
 
-                            {/* Nom & N° Joueur & Club */}
+                            {/* Nom & N° Joueur & Équipe */}
                             <td className="py-2 px-3">
                               <div className="flex items-center gap-2">
                                 <span className="font-mono font-bold text-gray-800 bg-gray-100 px-1.5 py-0.5 rounded text-[11px] border border-gray-200">
@@ -446,7 +446,7 @@ export const TabTour1: React.FC<TabTour1Props> = ({
                                     {player?.name || `Joueur #${item.scoreObj.playerId}`}
                                   </div>
                                   <div className="text-[10px] text-gray-500">
-                                    {player?.team || 'Sans club'}
+                                    {player?.team || 'Sans équipe'}
                                   </div>
                                 </div>
                               </div>

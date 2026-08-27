@@ -104,7 +104,7 @@ export const TabTour2: React.FC<TabTour2Props> = ({
             <p className="text-xs text-gray-600 max-w-3xl">
               Le score du tir s'ajoute au cumul du Tour 1. On retient les{' '}
               <strong className="text-emerald-700 font-bold">{settings.round2QualifiersPerPool} premiers de chaque poule</strong> ({totalQualifsT2} qualifiés pour le Tour 3). Les éliminés rapportent{' '}
-              <strong>2 points</strong> à leur club.
+              <strong>2 points</strong> à leur équipe.
             </p>
           </div>
 
@@ -430,7 +430,7 @@ export const TabTour2: React.FC<TabTour2Props> = ({
                                     {player?.name || `Joueur #${item.scoreObj.playerId}`}
                                   </div>
                                   <div className="text-[10px] text-gray-500">
-                                    {player?.team || 'Sans club'}
+                                    {player?.team || 'Sans équipe'}
                                   </div>
                                 </div>
                               </div>

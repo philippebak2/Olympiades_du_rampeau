@@ -2,17 +2,17 @@ import { Player, TournamentSettings, TournamentData } from '../types/tournament'
 
 export const SAMPLE_TEAMS = [
   'Quilleurs de Strasbourg',
-  'BC Colmar',
+  'Équipe de Colmar',
   'AS Quilles Mulhouse',
-  'Quilles Club Vosgien',
+  'Quilleurs Vosgiens',
   'La Quille d’Or Saverne',
   'Étoile Bowling Haguenau',
   'Les Frappeurs de Sélestat',
-  'Bowling Club Belfort',
+  'Équipe de Belfort',
   'Quilles Traditionnelles Metz',
   'Union Quilleurs Nancy',
   'Le Strike de Saint-Dié',
-  'Club des Neuf Quilles Épinal',
+  'Équipe des Neuf Quilles Épinal',
 ];
 
 export const FEMALE_FIRST_NAMES = [
