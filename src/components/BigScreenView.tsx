@@ -10,6 +10,7 @@ import {
   Sparkles,
   Crown,
   Medal,
+  Baby,
 } from 'lucide-react';
 
 interface BigScreenViewProps {
@@ -24,7 +25,7 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
   onClose,
 }) => {
   const standings = calculateTeamStandings(tournament, playersMap);
-  const [activeView, setActiveView] = useState<'currentRound' | 'teams' | 'finals'>('currentRound');
+  const [activeView, setActiveView] = useState<'currentRound' | 'teams' | 'categories' | 'finals'>('currentRound');
 
   // Determine current active phase
   let activePhaseTitle = 'Tour 1 (Qualifications)';
@@ -36,12 +37,85 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
     activePhaseTitle = 'Tour 2 (Qualifications)';
   }
 
+  // Compute stats for players
+  const playerStatsList = tournament.players.map((player) => {
+    let t1Score = 0;
+    let t2Score = 0;
+    let t3Score = 0;
+    let finalsScore = 0;
+    let throwCount = 0;
+
+    tournament.tour1Poules.forEach((poule) => {
+      const ps = poule.playerScores.find((s) => s.playerId === player.id);
+      if (ps) {
+        ps.tirs.forEach((t) => {
+          if (t !== undefined && t !== null) {
+            t1Score += t;
+            throwCount++;
+          }
+        });
+      }
+    });
+
+    tournament.tour2Poules.forEach((poule) => {
+      const ps = poule.playerScores.find((s) => s.playerId === player.id);
+      if (ps) {
+        ps.tirs.forEach((t) => {
+          if (t !== undefined && t !== null) {
+            t2Score += t;
+            throwCount++;
+          }
+        });
+      }
+    });
+
+    tournament.tour3Poules.forEach((poule) => {
+      const ps = poule.playerScores.find((s) => s.playerId === player.id);
+      if (ps) {
+        ps.tirs.forEach((t) => {
+          if (t !== undefined && t !== null) {
+            t3Score += t;
+            throwCount++;
+          }
+        });
+      }
+    });
+
+    tournament.finalMatches.forEach((m) => {
+      if (m.player1Id === player.id && m.score1 !== null) {
+        finalsScore += m.score1;
+        throwCount++;
+      }
+      if (m.player2Id === player.id && m.score2 !== null) {
+        finalsScore += m.score2;
+        throwCount++;
+      }
+    });
+
+    const totalPins = t1Score + t2Score + t3Score + finalsScore;
+    const average = throwCount > 0 ? (totalPins / throwCount).toFixed(2) : '0.00';
+
+    return {
+      player,
+      totalPins,
+      throwCount,
+      average,
+    };
+  });
+
+  playerStatsList.sort((a, b) => b.totalPins - a.totalPins);
+
+  const topOverall = playerStatsList.slice(0, 5);
+  const topWomen = playerStatsList.filter((p) => p.player.gender === 'F').slice(0, 5);
+  const topJuniors = playerStatsList.filter((p) => !!p.player.isUnder18).slice(0, 5);
+
   // Auto switch views every 15 seconds
   useEffect(() => {
     const timer = setInterval(() => {
       setActiveView((prev) => {
         if (prev === 'currentRound') return 'teams';
-        if (prev === 'teams') return tournament.finalMatches.length > 0 ? 'finals' : 'currentRound';
+        if (prev === 'teams') return 'categories';
+        if (prev === 'categories') return tournament.finalMatches.length > 0 ? 'finals' : 'currentRound';
         return 'currentRound';
       });
     }, 15000);
@@ -90,6 +164,15 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
           >
             Classement Clubs
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveView('categories')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+              activeView === 'categories' ? 'bg-white text-gray-950' : 'bg-gray-800 hover:bg-gray-700 text-gray-300'
+            }`}
+          >
+            Podiums & Catégories (♀ / -18)
+          </button>
           {tournament.finalMatches.length > 0 && (
             <button
               type="button"
@@ -115,6 +198,7 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
 
       {/* Main Content Area */}
       <div className="my-6 flex-1">
+        {/* Teams View */}
         {activeView === 'teams' && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -169,6 +253,166 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
           </div>
         )}
 
+        {/* Categories / Special Podiums View */}
+        {activeView === 'categories' && (
+          <div className="space-y-4">
+            <h2 className="text-lg font-bold text-white flex items-center gap-2">
+              <Trophy className="w-5 h-5 text-amber-400" />
+              <span>Classements Spéciaux & Podiums par Catégories</span>
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* Scratch / Overall */}
+              <div className="bg-gray-900 rounded-2xl border border-gray-800 p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Trophy className="w-4 h-4 text-amber-400" />
+                    <span className="font-bold text-sm text-white">Classement Général Scratch</span>
+                  </div>
+                  <span className="text-[10px] bg-gray-800 text-gray-300 px-2 py-0.5 rounded">
+                    Tous
+                  </span>
+                </div>
+
+                <div className="divide-y divide-gray-800 text-xs">
+                  {topOverall.map((item, idx) => (
+                    <div key={item.player.id} className="py-2.5 flex items-center justify-between">
+                      <div className="flex items-center gap-2 truncate pr-2">
+                        <span
+                          className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] ${
+                            idx === 0
+                              ? 'bg-amber-400 text-gray-950'
+                              : idx === 1
+                              ? 'bg-gray-300 text-gray-950'
+                              : idx === 2
+                              ? 'bg-amber-700 text-white'
+                              : 'bg-gray-800 text-gray-300'
+                          }`}
+                        >
+                          {idx + 1}
+                        </span>
+                        <div className="truncate">
+                          <div className="font-semibold text-white truncate">
+                            #{item.player.id} {item.player.name}
+                          </div>
+                          <div className="text-[10px] text-gray-400">{item.player.team}</div>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <div className="font-bold text-white">{item.totalPins} q</div>
+                        <div className="text-[10px] text-gray-400 font-mono">{item.average} moy</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Women */}
+              <div className="bg-gray-900 rounded-2xl border border-pink-900/60 p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <span className="text-base">🌸</span>
+                    <span className="font-bold text-sm text-pink-300">Classement Féminin (Dames)</span>
+                  </div>
+                  <span className="text-[10px] bg-pink-950 text-pink-300 border border-pink-800 px-2 py-0.5 rounded font-bold">
+                    {playerStatsList.filter((p) => p.player.gender === 'F').length} Dames
+                  </span>
+                </div>
+
+                {topWomen.length > 0 ? (
+                  <div className="divide-y divide-gray-800 text-xs">
+                    {topWomen.map((item, idx) => (
+                      <div key={item.player.id} className="py-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2 truncate pr-2">
+                          <span
+                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] ${
+                              idx === 0
+                                ? 'bg-pink-500 text-white'
+                                : idx === 1
+                                ? 'bg-pink-700 text-white'
+                                : idx === 2
+                                ? 'bg-pink-900 text-pink-200'
+                                : 'bg-gray-800 text-gray-300'
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                          <div className="truncate">
+                            <div className="font-semibold text-white truncate">
+                              #{item.player.id} {item.player.name}
+                            </div>
+                            <div className="text-[10px] text-gray-400">{item.player.team}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-pink-300">{item.totalPins} q</div>
+                          <div className="text-[10px] text-gray-400 font-mono">{item.average} moy</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-xs text-gray-500 py-8">
+                    Aucune participante dans la catégorie féminine
+                  </div>
+                )}
+              </div>
+
+              {/* Juniors */}
+              <div className="bg-gray-900 rounded-2xl border border-amber-900/60 p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-gray-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Baby className="w-4 h-4 text-amber-400" />
+                    <span className="font-bold text-sm text-amber-300">Classement Juniors (&lt; 18 ans)</span>
+                  </div>
+                  <span className="text-[10px] bg-amber-950 text-amber-300 border border-amber-800 px-2 py-0.5 rounded font-bold">
+                    {playerStatsList.filter((p) => p.player.isUnder18).length} Juniors
+                  </span>
+                </div>
+
+                {topJuniors.length > 0 ? (
+                  <div className="divide-y divide-gray-800 text-xs">
+                    {topJuniors.map((item, idx) => (
+                      <div key={item.player.id} className="py-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-2 truncate pr-2">
+                          <span
+                            className={`w-5 h-5 rounded flex items-center justify-center font-bold text-[10px] ${
+                              idx === 0
+                                ? 'bg-amber-500 text-gray-950'
+                                : idx === 1
+                                ? 'bg-amber-700 text-white'
+                                : idx === 2
+                                ? 'bg-amber-900 text-amber-200'
+                                : 'bg-gray-800 text-gray-300'
+                            }`}
+                          >
+                            {idx + 1}
+                          </span>
+                          <div className="truncate">
+                            <div className="font-semibold text-white truncate">
+                              #{item.player.id} {item.player.name}
+                            </div>
+                            <div className="text-[10px] text-gray-400">{item.player.team}</div>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <div className="font-bold text-amber-300">{item.totalPins} q</div>
+                          <div className="text-[10px] text-gray-400 font-mono">{item.average} moy</div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center text-xs text-gray-500 py-8">
+                    Aucun quilleur de moins de 18 ans
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Current Round Poules View */}
         {activeView === 'currentRound' && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">
@@ -246,6 +490,7 @@ export const BigScreenView: React.FC<BigScreenViewProps> = ({
           </div>
         )}
 
+        {/* Finals View */}
         {activeView === 'finals' && tournament.finalMatches.length > 0 && (
           <div className="space-y-4">
             <h2 className="text-lg font-bold text-white flex items-center gap-2">

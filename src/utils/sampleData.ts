@@ -15,26 +15,26 @@ export const SAMPLE_TEAMS = [
   'Club des Neuf Quilles Épinal',
 ];
 
-export const FRENCH_FIRST_NAMES = [
+export const FEMALE_FIRST_NAMES = [
+  'Marie', 'Nathalie', 'Isabelle', 'Sylvie', 'Catherine', 'Valérie', 'Céline', 'Sandrine',
+  'Sophie', 'Audrey', 'Aurélie', 'Émilie', 'Camille', 'Julie', 'Marion', 'Laura',
+  'Élise', 'Chloé', 'Léa', 'Manon', 'Lucie', 'Sarah', 'Clara', 'Inès',
+  'Jeanne', 'Mathilde', 'Charlotte', 'Alice', 'Juliette', 'Louise', 'Emma', 'Zoé',
+  'Amélie', 'Morgane', 'Lucile', 'Carla', 'Océane', 'Margaux', 'Pauline', 'Justine',
+];
+
+export const MALE_FIRST_NAMES = [
   'Jean', 'Michel', 'Pierre', 'Philippe', 'Alain', 'Laurent', 'Nicolas', 'Stéphane',
   'Christophe', 'Frédéric', 'David', 'Sébastien', 'Julien', 'Thomas', 'Alexandre', 'Guillaume',
   'Maxime', 'Romain', 'Antoine', 'Lucas', 'Marc', 'Pascal', 'Thierry', 'Bruno',
   'Dominique', 'Patrick', 'Bernard', 'Gérard', 'Didier', 'Éric', 'Olivier', 'Hervé',
-  'Marie', 'Nathalie', 'Isabelle', 'Sylvie', 'Catherine', 'Valérie', 'Céline', 'Sandrine',
-  'Sophie', 'Audrey', 'Aurélie', 'Émilie', 'Camille', 'Julie', 'Marion', 'Laura',
   'Vincent', 'Christian', 'François', 'Daniel', 'Gilles', 'Yves', 'Francis', 'Guy',
   'Fabrice', 'Franck', 'Yannick', 'Cédric', 'Anthony', 'Benjamin', 'Florian', 'Arnaud',
   'Benoît', 'Mathieu', 'Quentin', 'Adrien', 'Hugo', 'Clément', 'Paul', 'Louis',
   'Arthur', 'Jules', 'Gabriel', 'Théo', 'Léo', 'Nathan', 'Victor', 'Simon',
-  'Henri', 'René', 'Jean-Luc', 'Jean-Paul', 'Jean-Marc', 'Jean-Pierre', 'Jean-Claude', 'Serge',
-  'Claude', 'Jacques', 'André', 'Raymond', 'Maurice', 'Robert', 'Georges', 'Roger',
-  'Élise', 'Chloé', 'Léa', 'Manon', 'Lucie', 'Sarah', 'Clara', 'Inès',
-  'Jeanne', 'Mathilde', 'Charlotte', 'Alice', 'Juliette', 'Louise', 'Emma', 'Zoé',
   'Baptiste', 'Rémi', 'Damien', 'Xavier', 'Ludovic', 'Mickaël', 'Bastien', 'Valentin',
   'Maxence', 'Corentin', 'Tristan', 'Robin', 'Alexis', 'Thibault', 'Kevin', 'Jordan',
   'Jonathan', 'Sylvain', 'Bertrand', 'Emmanuel', 'Samuel', 'Florent', 'Loïc', 'Gautier',
-  'Gaël', 'Lionel', 'Grégory', 'Benoist', 'Hugues', 'Brice', 'Renaud', 'Tanguy',
-  'Patrice', 'Joël', 'Serge', 'Régis', 'Norbert', 'Hubert', 'Gilbert', 'Martial',
 ];
 
 export const FRENCH_LAST_NAMES = [
@@ -53,13 +53,26 @@ export const FRENCH_LAST_NAMES = [
 export function generateSamplePlayers(count: number = 160): Player[] {
   const players: Player[] = [];
   for (let i = 1; i <= count; i++) {
-    const firstName = FRENCH_FIRST_NAMES[(i - 1) % FRENCH_FIRST_NAMES.length];
+    // Environ 35% de femmes, 65% d'hommes
+    const isFemale = (i % 3 === 0) || (i % 8 === 0);
+    const gender: 'H' | 'F' = isFemale ? 'F' : 'H';
+    
+    // Environ 15% de moins de 18 ans (< 18 ans)
+    const isUnder18 = (i % 7 === 0) || (i % 13 === 0);
+
+    const firstName = isFemale
+      ? FEMALE_FIRST_NAMES[(i - 1) % FEMALE_FIRST_NAMES.length]
+      : MALE_FIRST_NAMES[(i - 1) % MALE_FIRST_NAMES.length];
+
     const lastName = FRENCH_LAST_NAMES[Math.floor((i * 7) % FRENCH_LAST_NAMES.length)];
     const team = SAMPLE_TEAMS[(i - 1) % SAMPLE_TEAMS.length];
+    
     players.push({
       id: i,
       name: `${firstName} ${lastName}`,
       team,
+      gender,
+      isUnder18,
     });
   }
   return players;

@@ -873,4 +873,349 @@ export function exportJudgesScoreSheetPDF({
   printWindow.document.close();
 }
 
+export interface PalmaresPDFItem {
+  rank: number;
+  overallRank?: number;
+  player: Player;
+  t1Score: number;
+  t2Score: number;
+  t3Score: number;
+  finalsScore: number;
+  totalPins: number;
+  average: string;
+  finalTitle: string;
+}
+
+export interface ExportPalmaresPDFOptions {
+  title?: string;
+  categoryTitle: string; // "Classement Général (Scratch)", "Classement Féminin (Dames)", "Classement Juniors (< 18 ans)"
+  subtitle?: string;
+  items: PalmaresPDFItem[];
+  showCategoryColumn?: boolean;
+}
+
+/**
+ * Exporte le palmarès officiel et classement d'une catégorie (Général, Féminin, Juniors) en PDF A4.
+ */
+export function exportPalmaresPDF({
+  title = 'Olympiades du Rampeau',
+  categoryTitle,
+  subtitle,
+  items,
+  showCategoryColumn = false,
+}: ExportPalmaresPDFOptions) {
+  if (items.length === 0) return;
+
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert("Veuillez autoriser l'ouverture des fenêtres pop-up pour imprimer le palmarès.");
+    return;
+  }
+
+  const currentDate = new Date().toLocaleDateString('fr-FR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+
+  const podium = items.slice(0, 3);
+
+  const htmlContent = `
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>${title} - ${categoryTitle}</title>
+  <style>
+    @page {
+      size: A4 portrait;
+      margin: 10mm 12mm 10mm 12mm;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: #0f172a;
+      background: #ffffff;
+      margin: 0;
+      padding: 0;
+      font-size: 11px;
+    }
+    .header {
+      border-bottom: 2px solid #0f172a;
+      padding-bottom: 8px;
+      margin-bottom: 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .main-title {
+      font-size: 20px;
+      font-weight: 800;
+      color: #0f172a;
+      text-transform: uppercase;
+      letter-spacing: -0.5px;
+      margin: 0 0 2px 0;
+    }
+    .sub-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0284c7;
+      margin: 0;
+    }
+    .meta-info {
+      text-align: right;
+      font-size: 10px;
+      color: #64748b;
+    }
+
+    /* Podium visual */
+    .podium-section {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 16px;
+      align-items: flex-end;
+    }
+    .podium-box {
+      border-radius: 8px;
+      padding: 8px 12px;
+      text-align: center;
+      flex: 1;
+      max-width: 180px;
+      border: 1px solid #cbd5e1;
+    }
+    .podium-1 {
+      background: #f8fafc;
+      border: 2px solid #0f172a;
+      order: 2;
+      padding: 12px;
+    }
+    .podium-2 {
+      background: #f1f5f9;
+      order: 1;
+    }
+    .podium-3 {
+      background: #fef3c7;
+      border-color: #fde68a;
+      order: 3;
+    }
+    .podium-medal {
+      font-size: 14px;
+      font-weight: 800;
+      margin-bottom: 2px;
+    }
+    .podium-name {
+      font-size: 12px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .podium-team {
+      font-size: 9.5px;
+      color: #64748b;
+    }
+    .podium-score {
+      display: inline-block;
+      margin-top: 4px;
+      background: #0f172a;
+      color: #fff;
+      font-size: 10px;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 4px;
+    }
+    .podium-3 .podium-score {
+      background: #b45309;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 10px;
+    }
+    th {
+      background-color: #f1f5f9;
+      color: #334155;
+      font-weight: 700;
+      text-transform: uppercase;
+      font-size: 8.5px;
+      letter-spacing: 0.5px;
+      padding: 5px 6px;
+      border-top: 1px solid #cbd5e1;
+      border-bottom: 1px solid #cbd5e1;
+      text-align: left;
+    }
+    td {
+      padding: 4.5px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      color: #1e293b;
+    }
+    tr.top1 {
+      background-color: #ecfdf5;
+      font-weight: 700;
+    }
+    tr.top3 {
+      background-color: #f8fafc;
+    }
+    .rank-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 18px;
+      border-radius: 4px;
+      font-weight: 800;
+      font-size: 9px;
+      background: #e2e8f0;
+    }
+    .rank-1 { background: #0f172a; color: #fff; }
+    .rank-2 { background: #94a3b8; color: #fff; }
+    .rank-3 { background: #d97706; color: #fff; }
+
+    .cat-badge {
+      display: inline-block;
+      padding: 1px 4px;
+      border-radius: 3px;
+      font-size: 8.5px;
+      font-weight: 700;
+    }
+    .cat-f { background: #fce7f3; color: #9d174d; border: 1px solid #fbcfe8; }
+    .cat-u18 { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+
+    .footer {
+      margin-top: 15px;
+      padding-top: 6px;
+      border-top: 1px solid #cbd5e1;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8.5px;
+      color: #64748b;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1 class="main-title">${title}</h1>
+      <h2 class="sub-title">🏆 ${categoryTitle}</h2>
+      ${subtitle ? `<div style="font-size: 10px; color: #475569; margin-top: 2px;">${subtitle}</div>` : ''}
+    </div>
+    <div class="meta-info">
+      <div>Édité le : <strong>${currentDate}</strong></div>
+      <div>Total : <strong>${items.length} participants</strong></div>
+    </div>
+  </div>
+
+  ${podium.length >= 2 ? `
+  <div class="podium-section">
+    ${podium[1] ? `
+      <div class="podium-box podium-2">
+        <div class="podium-medal">🥈 2ème Place</div>
+        <div class="podium-name">#${podium[1].player.id} ${podium[1].player.name}</div>
+        <div class="podium-team">${podium[1].player.team || 'Individuel'}</div>
+        <div class="podium-score">${podium[1].totalPins} quilles (moy. ${podium[1].average})</div>
+      </div>
+    ` : ''}
+
+    ${podium[0] ? `
+      <div class="podium-box podium-1">
+        <div class="podium-medal">🥇 1ère Place (Vainqueur)</div>
+        <div class="podium-name">#${podium[0].player.id} ${podium[0].player.name}</div>
+        <div class="podium-team">${podium[0].player.team || 'Individuel'}</div>
+        <div class="podium-score">${podium[0].totalPins} quilles (moy. ${podium[0].average})</div>
+      </div>
+    ` : ''}
+
+    ${podium[2] ? `
+      <div class="podium-box podium-3">
+        <div class="podium-medal">🥉 3ème Place</div>
+        <div class="podium-name">#${podium[2].player.id} ${podium[2].player.name}</div>
+        <div class="podium-team">${podium[2].player.team || 'Individuel'}</div>
+        <div class="podium-score" style="background: #92400e;">${podium[2].totalPins} quilles (moy. ${podium[2].average})</div>
+      </div>
+    ` : ''}
+  </div>
+  ` : ''}
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 40px; text-align: center;">Rang</th>
+        ${items[0]?.overallRank !== undefined ? '<th style="width: 45px; text-align: center;">Scratch</th>' : ''}
+        <th style="width: 40px; text-align: center;">N°</th>
+        <th>Nom et Prénom</th>
+        ${showCategoryColumn ? '<th style="width: 60px; text-align: center;">Catégorie</th>' : ''}
+        <th>Club / Équipe</th>
+        <th style="width: 40px; text-align: center;">T1</th>
+        <th style="width: 40px; text-align: center;">T2</th>
+        <th style="width: 40px; text-align: center;">T3</th>
+        <th style="width: 45px; text-align: center;">Finales</th>
+        <th style="width: 65px; text-align: center; font-weight: 800;">Total</th>
+        <th style="width: 50px; text-align: center;">Moyenne</th>
+        <th style="width: 90px; text-align: right;">Stade</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${items.map((item, idx) => {
+        const r = item.rank;
+        const rowClass = r === 1 ? 'top1' : r <= 3 ? 'top3' : '';
+        const rankClass = r === 1 ? 'rank-1' : r === 2 ? 'rank-2' : r === 3 ? 'rank-3' : '';
+        const isFemme = item.player.gender === 'F';
+        const isU18 = item.player.isUnder18;
+
+        return `
+          <tr class="${rowClass}">
+            <td style="text-align: center;">
+              <span class="rank-badge ${rankClass}">${r}</span>
+            </td>
+            ${item.overallRank !== undefined ? `<td style="text-align: center; color: #64748b; font-size: 9px;">#${item.overallRank}</td>` : ''}
+            <td style="text-align: center; font-weight: 700; font-family: monospace;">#${item.player.id}</td>
+            <td style="font-weight: 600;">${item.player.name}</td>
+            ${showCategoryColumn ? `
+              <td style="text-align: center;">
+                ${isFemme ? '<span class="cat-badge cat-f">♀ F</span>' : '<span style="font-size: 8.5px; color: #475569;">♂ H</span>'}
+                ${isU18 ? '<span class="cat-badge cat-u18">-18</span>' : ''}
+              </td>
+            ` : ''}
+            <td style="color: #475569;">${item.player.team || 'Individuel'}</td>
+            <td style="text-align: center;">${item.t1Score || '-'}</td>
+            <td style="text-align: center;">${item.t2Score || '-'}</td>
+            <td style="text-align: center;">${item.t3Score || '-'}</td>
+            <td style="text-align: center;">${item.finalsScore > 0 ? `+${item.finalsScore}` : '-'}</td>
+            <td style="text-align: center; font-weight: 800; color: #0f172a; font-size: 11px;">${item.totalPins}</td>
+            <td style="text-align: center; font-family: monospace; font-weight: 700;">${item.average}</td>
+            <td style="text-align: right; font-size: 9px; color: #64748b;">${item.finalTitle}</td>
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  </table>
+
+  <div class="footer">
+    <div>Olympiades du Rampeau • Jeu traditionnel de quilles de 9</div>
+    <div>Document officiel du tournoi — Page 1 / 1</div>
+  </div>
+
+  <script>
+    window.addEventListener('load', function() {
+      setTimeout(function() {
+        window.print();
+      }, 400);
+    });
+  </script>
+</body>
+</html>
+`;
+
+  printWindow.document.open();
+  printWindow.document.write(htmlContent);
+  printWindow.document.close();
+}
+
+
 

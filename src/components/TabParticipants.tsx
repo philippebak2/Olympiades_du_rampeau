@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Player, TournamentSettings, Poule } from '../types/tournament';
+import { Player, TournamentSettings, Poule, Gender } from '../types/tournament';
 import { SAMPLE_TEAMS, generateSamplePlayers } from '../utils/sampleData';
 import {
   UserPlus,
@@ -14,16 +14,18 @@ import {
   Sliders,
   AlertCircle,
   HelpCircle,
+  User,
+  Baby,
 } from 'lucide-react';
 
 interface TabParticipantsProps {
   players: Player[];
   settings: TournamentSettings;
   tour1Poules: Poule[];
-  onAddPlayer: (player: { name: string; team: string }) => void;
-  onUpdatePlayer: (id: number, player: { name: string; team: string }) => void;
+  onAddPlayer: (player: { name: string; team: string; gender?: Gender; isUnder18?: boolean }) => void;
+  onUpdatePlayer: (id: number, player: { name: string; team: string; gender?: Gender; isUnder18?: boolean }) => void;
   onDeletePlayer: (id: number) => void;
-  onBatchAddPlayers: (newPlayers: Array<{ name: string; team: string }>) => void;
+  onBatchAddPlayers: (newPlayers: Array<{ name: string; team: string; gender?: Gender; isUnder18?: boolean }>) => void;
   onClearAllPlayers: () => void;
   onUpdateSettings: (newSettings: Partial<TournamentSettings>) => void;
   onGenerateTour1: () => void;
@@ -48,9 +50,14 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
   // Form State
   const [singleName, setSingleName] = useState('');
   const [singleTeam, setSingleTeam] = useState('');
+  const [singleGender, setSingleGender] = useState<Gender>('H');
+  const [singleIsUnder18, setSingleIsUnder18] = useState(false);
+
   const [editingPlayerId, setEditingPlayerId] = useState<number | null>(null);
   const [editName, setEditName] = useState('');
   const [editTeam, setEditTeam] = useState('');
+  const [editGender, setEditGender] = useState<Gender>('H');
+  const [editIsUnder18, setEditIsUnder18] = useState(false);
 
   // Bulk paste modal / text
   const [showBulkModal, setShowBulkModal] = useState(false);
@@ -59,6 +66,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
   // Search & Filter
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTeam, setFilterTeam] = useState<string>('ALL');
+  const [filterCategory, setFilterCategory] = useState<'ALL' | 'H' | 'F' | 'U18'>('ALL');
 
   // Add player handler
   const handleAddSubmit = (e: React.FormEvent) => {
@@ -67,9 +75,13 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
     onAddPlayer({
       name: singleName.trim(),
       team: singleTeam.trim() || 'Individuel',
+      gender: singleGender,
+      isUnder18: singleIsUnder18,
     });
     setSingleName('');
     setSingleTeam('');
+    setSingleGender('H');
+    setSingleIsUnder18(false);
   };
 
   // Edit player handler
@@ -77,6 +89,8 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
     setEditingPlayerId(player.id);
     setEditName(player.name);
     setEditTeam(player.team || '');
+    setEditGender(player.gender || 'H');
+    setEditIsUnder18(!!player.isUnder18);
   };
 
   const handleSaveEdit = (id: number) => {
@@ -84,6 +98,8 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
     onUpdatePlayer(id, {
       name: editName.trim(),
       team: editTeam.trim() || 'Individuel',
+      gender: editGender,
+      isUnder18: editIsUnder18,
     });
     setEditingPlayerId(null);
   };
@@ -91,17 +107,30 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
   // Bulk add handler
   const handleBulkSubmit = () => {
     const lines = bulkText.split('\n').map((l) => l.trim()).filter((l) => l.length > 0);
-    const newItems: Array<{ name: string; team: string }> = [];
+    const newItems: Array<{ name: string; team: string; gender?: Gender; isUnder18?: boolean }> = [];
 
     lines.forEach((line) => {
-      // Si la ligne contient une virgule ou un point-virgule (ex: "Jean Dupont, Quilleurs d'Alsace")
+      // Formats supportés :
+      // "Jean Dupont, BC Colmar, H, U18" ou "Marie Curie, Strasbourg, F"
       if (line.includes(';') || line.includes(',')) {
-        const parts = line.split(/[;,]/);
-        const name = parts[0].trim();
-        const team = parts.slice(1).join(' ').trim();
-        if (name) newItems.push({ name, team: team || 'Individuel' });
+        const parts = line.split(/[;,]/).map((p) => p.trim());
+        const name = parts[0];
+        let team = 'Individuel';
+        let gender: Gender = 'H';
+        let isUnder18 = false;
+
+        if (parts.length > 1) {
+          team = parts[1] || 'Individuel';
+        }
+        for (let i = 2; i < parts.length; i++) {
+          const item = parts[i].toUpperCase();
+          if (item === 'F' || item === 'FEMME' || item === 'FEMININ') gender = 'F';
+          if (item === 'H' || item === 'HOMME' || item === 'MASCULIN') gender = 'H';
+          if (item === 'U18' || item === 'JEUNE' || item === '-18' || item === 'JUNIOR') isUnder18 = true;
+        }
+        if (name) newItems.push({ name, team, gender, isUnder18 });
       } else {
-        newItems.push({ name: line, team: 'Individuel' });
+        newItems.push({ name: line, team: 'Individuel', gender: 'H', isUnder18: false });
       }
     });
 
@@ -119,7 +148,13 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
       p.id.toString().includes(searchTerm) ||
       p.team.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesTeam = filterTeam === 'ALL' || p.team === filterTeam;
-    return matchesSearch && matchesTeam;
+
+    let matchesCategory = true;
+    if (filterCategory === 'H') matchesCategory = (p.gender || 'H') === 'H';
+    if (filterCategory === 'F') matchesCategory = p.gender === 'F';
+    if (filterCategory === 'U18') matchesCategory = !!p.isUnder18;
+
+    return matchesSearch && matchesTeam && matchesCategory;
   });
 
   // Unique teams list
@@ -127,6 +162,10 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
 
   // Calculate stats
   const totalPlayers = players.length;
+  const countHommes = players.filter((p) => (p.gender || 'H') === 'H').length;
+  const countFemmes = players.filter((p) => p.gender === 'F').length;
+  const countUnder18 = players.filter((p) => p.isUnder18).length;
+
   const poolCount = settings.round1PoolCount;
   const avgPlayersPerPool = poolCount > 0 ? (totalPlayers / poolCount).toFixed(1) : '0';
   const totalQualifiedT1 = poolCount * settings.round1QualifiersPerPool;
@@ -145,23 +184,27 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
               Gestion des Inscriptions & Tirage des Poules
             </h2>
             <p className="text-xs text-gray-600 leading-relaxed">
-              Définissez les participants (chacun reçoit un numéro unique attribué pour toute la compétition), configurez le nombre de poules et le nombre de qualifiés par poule avant de lancer le tirage aléatoire.
+              Définissez les participants avec leurs catégories (<strong>Homme / Femme</strong>, <strong>-18 ans</strong>), configurez le nombre de poules et le nombre de qualifiés par poule avant de lancer le tirage aléatoire.
             </p>
           </div>
 
           {/* Quick Metrics */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 shrink-0">
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center">
-              <div className="text-2xl font-bold text-gray-900">{totalPlayers}</div>
-              <div className="text-[11px] text-gray-500 font-medium">Participants</div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 shrink-0">
+            <div className="bg-gray-50 rounded-xl p-2.5 border border-gray-200 text-center">
+              <div className="text-xl font-bold text-gray-900">{totalPlayers}</div>
+              <div className="text-[10px] text-gray-500 font-medium">Participants</div>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center">
-              <div className="text-2xl font-bold text-gray-900">{settings.round1PoolCount}</div>
-              <div className="text-[11px] text-gray-500 font-medium">Poules Tour 1</div>
+            <div className="bg-blue-50/70 rounded-xl p-2.5 border border-blue-200 text-center">
+              <div className="text-xl font-bold text-blue-900">{countHommes} <span className="text-xs text-blue-600 font-medium">/ {countFemmes} ♀</span></div>
+              <div className="text-[10px] text-blue-700 font-medium">{countHommes} H • {countFemmes} F</div>
             </div>
-            <div className="bg-gray-50 rounded-xl p-3 border border-gray-200 text-center col-span-2 sm:col-span-1">
-              <div className="text-2xl font-bold text-emerald-600">{totalQualifiedT1}</div>
-              <div className="text-[11px] text-gray-500 font-medium">Qualifiés Tour 2</div>
+            <div className="bg-amber-50/70 rounded-xl p-2.5 border border-amber-200 text-center">
+              <div className="text-xl font-bold text-amber-900">{countUnder18}</div>
+              <div className="text-[10px] text-amber-700 font-medium">Moins de 18 ans</div>
+            </div>
+            <div className="bg-emerald-50/70 rounded-xl p-2.5 border border-emerald-200 text-center">
+              <div className="text-xl font-bold text-emerald-700">{totalQualifiedT1}</div>
+              <div className="text-[10px] text-emerald-700 font-medium">Qualifiés T2</div>
             </div>
           </div>
         </div>
@@ -287,8 +330,8 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
             {/* Tour 3 Settings */}
             <div className="bg-gray-50/80 rounded-xl p-3.5 border border-gray-200 space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-900">Tour 3</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-700 font-semibold">1 tir (cumul général)</span>
+                <span className="text-xs font-bold text-gray-900">Tour 3 (A, B, C, D)</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-gray-200 text-gray-700 font-semibold">1 tir (cumul T1+T2+T3)</span>
               </div>
               
               <div>
@@ -405,7 +448,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                 <input
                   type="text"
                   id="input-player-name"
-                  placeholder="ex: Jean Dupont"
+                  placeholder="ex: Jean Dupont ou Marie Curie"
                   value={singleName}
                   onChange={(e) => setSingleName(e.target.value)}
                   className="w-full px-3 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 outline-none transition-all"
@@ -433,10 +476,65 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                 </datalist>
               </div>
 
+              {/* Genre & Moins de 18 ans */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Sexe / Genre
+                  </label>
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setSingleGender('H')}
+                      className={`py-1.5 px-2 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                        singleGender === 'H'
+                          ? 'bg-blue-900 text-white border-blue-900 shadow-2xs'
+                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>Homme</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setSingleGender('F')}
+                      className={`py-1.5 px-2 text-xs font-bold rounded-lg border transition-all cursor-pointer flex items-center justify-center gap-1 ${
+                        singleGender === 'F'
+                          ? 'bg-pink-600 text-white border-pink-600 shadow-2xs'
+                          : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+                      }`}
+                    >
+                      <span>Femme</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-semibold text-gray-700 mb-1">
+                    Catégorie d'Âge
+                  </label>
+                  <label
+                    className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-bold cursor-pointer transition-all ${
+                      singleIsUnder18
+                        ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-2xs'
+                        : 'bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      id="checkbox-single-under18"
+                      checked={singleIsUnder18}
+                      onChange={(e) => setSingleIsUnder18(e.target.checked)}
+                      className="rounded border-gray-300 text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer"
+                    />
+                    <span className="truncate">&lt; 18 ans (Junior)</span>
+                  </label>
+                </div>
+              </div>
+
               <button
                 type="submit"
                 id="btn-add-player"
-                className="w-full py-2.5 px-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold text-sm rounded-lg shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+                className="w-full py-2.5 px-4 bg-gray-900 hover:bg-gray-800 text-white font-semibold text-sm rounded-lg shadow-2xs transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98 mt-2"
               >
                 <UserPlus className="w-4 h-4" />
                 <span>Inscrire le joueur #{totalPlayers + 1}</span>
@@ -458,7 +556,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                 onClick={() => onLoadSamplePlayers(160)}
                 className="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs font-semibold rounded-lg transition-all flex items-center justify-between cursor-pointer"
               >
-                <span>Charger 160 Joueurs (16 Poules de 10)</span>
+                <span>Charger 160 Joueurs (H/F + &lt;18 ans)</span>
                 <span className="text-[10px] bg-gray-200 text-gray-800 font-bold px-2 py-0.5 rounded-full">Standard</span>
               </button>
 
@@ -468,7 +566,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                 onClick={() => onLoadSamplePlayers(80)}
                 className="w-full py-2 px-3 bg-gray-50 hover:bg-gray-100 border border-gray-200 text-gray-800 text-xs font-semibold rounded-lg transition-all flex items-center justify-between cursor-pointer"
               >
-                <span>Charger 80 Joueurs (8 Poules de 10)</span>
+                <span>Charger 80 Joueurs (H/F + &lt;18 ans)</span>
                 <span className="text-[10px] bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded-full">Tournoi Moyen</span>
               </button>
 
@@ -506,9 +604,10 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
           <div className="bg-gray-50 rounded-xl border border-gray-200 p-4 text-xs text-gray-700 space-y-1.5">
             <div className="font-bold flex items-center gap-1.5 text-gray-900">
               <HelpCircle className="w-4 h-4 text-gray-600" />
-              <span>Règles du Jeu de Quilles</span>
+              <span>Règles & Catégories du Rampeau</span>
             </div>
             <ul className="list-disc list-inside space-y-1 text-gray-600 text-[11px] leading-relaxed">
+              <li><strong>Catégories</strong> : Homme (H), Femme (F), Moins de 18 ans (&lt;18 ans).</li>
               <li><strong>Tour 1</strong> : 2 tirs sur 9 quilles (total max 18). Top 5 qualifiés par poule.</li>
               <li><strong>Tour 2</strong> : 1 tir sur 9 quilles cumulé au Tour 1. Top 5 qualifiés.</li>
               <li><strong>Tour 3</strong> : 4 poules A, B, C, D. Cumul T1+T2+T3. 4 qualifiés/poule (16 en 8èmes).</li>
@@ -534,15 +633,28 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
 
               {/* Filters */}
               <div className="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                {/* Category filter */}
+                <select
+                  id="filter-category-select"
+                  value={filterCategory}
+                  onChange={(e) => setFilterCategory(e.target.value as any)}
+                  className="text-xs bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 font-medium"
+                >
+                  <option value="ALL">Tous (H, F, &lt;18)</option>
+                  <option value="H">Hommes ({countHommes})</option>
+                  <option value="F">Femmes ({countFemmes})</option>
+                  <option value="U18">&lt; 18 ans ({countUnder18})</option>
+                </select>
+
                 <div className="relative">
                   <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400" />
                   <input
                     type="text"
                     id="search-participants-input"
-                    placeholder="Chercher N° ou Nom..."
+                    placeholder="Chercher..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 w-44"
+                    className="pl-8 pr-3 py-1.5 text-xs bg-white border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 w-36 sm:w-44"
                   />
                 </div>
 
@@ -551,7 +663,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                     id="filter-team-select"
                     value={filterTeam}
                     onChange={(e) => setFilterTeam(e.target.value)}
-                    className="text-xs bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 max-w-[150px]"
+                    className="text-xs bg-white border border-gray-300 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 max-w-[140px]"
                   >
                     <option value="ALL">Tous les clubs</option>
                     {uniqueTeams.map((team) => (
@@ -587,29 +699,33 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                 <table className="w-full text-left border-collapse text-xs">
                   <thead className="bg-gray-50 text-gray-600 uppercase tracking-wider font-bold text-[10px] sticky top-0 z-10 border-b border-gray-200">
                     <tr>
-                      <th className="py-2.5 px-4 w-16 text-center">N°</th>
-                      <th className="py-2.5 px-4">Nom et Prénom</th>
-                      <th className="py-2.5 px-4">Club / Équipe</th>
+                      <th className="py-2.5 px-3 w-14 text-center">N°</th>
+                      <th className="py-2.5 px-3">Nom et Prénom</th>
+                      <th className="py-2.5 px-3 w-28 text-center">Catégorie</th>
+                      <th className="py-2.5 px-3">Club / Équipe</th>
                       <th className="py-2.5 px-3 w-20 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {filteredPlayers.map((player) => {
                       const isEditing = editingPlayerId === player.id;
+                      const gender = player.gender || 'H';
+                      const isUnder18 = !!player.isUnder18;
+
                       return (
                         <tr
                           key={player.id}
                           className="hover:bg-gray-50 transition-colors group"
                         >
                           {/* Numéro à gauche */}
-                          <td className="py-2.5 px-4 text-center font-bold text-gray-900">
+                          <td className="py-2.5 px-3 text-center font-bold text-gray-900">
                             <span className="inline-flex items-center justify-center w-8 h-7 rounded-md bg-gray-100 text-gray-900 font-bold border border-gray-200 font-mono text-[11px]">
                               #{player.id}
                             </span>
                           </td>
 
                           {/* Nom */}
-                          <td className="py-2.5 px-4 font-semibold text-gray-900">
+                          <td className="py-2.5 px-3 font-semibold text-gray-900">
                             {isEditing ? (
                               <input
                                 type="text"
@@ -624,8 +740,51 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                             )}
                           </td>
 
+                          {/* Catégorie : Genre (Homme / Femme) + Moins de 18 ans */}
+                          <td className="py-2.5 px-3 text-center">
+                            {isEditing ? (
+                              <div className="flex items-center justify-center gap-1.5">
+                                <select
+                                  value={editGender}
+                                  onChange={(e) => setEditGender(e.target.value as Gender)}
+                                  className="px-1.5 py-0.5 border border-gray-400 rounded text-[11px] font-bold"
+                                >
+                                  <option value="H">Homme (H)</option>
+                                  <option value="F">Femme (F)</option>
+                                </select>
+                                <label className="inline-flex items-center gap-1 text-[11px] font-semibold cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={editIsUnder18}
+                                    onChange={(e) => setEditIsUnder18(e.target.checked)}
+                                    className="rounded border-gray-300 text-amber-600 focus:ring-amber-500 w-3.5 h-3.5"
+                                  />
+                                  <span>&lt;18</span>
+                                </label>
+                              </div>
+                            ) : (
+                              <div className="flex items-center justify-center gap-1 flex-wrap">
+                                {gender === 'F' ? (
+                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-pink-50 text-pink-700 border border-pink-200 text-[11px] font-bold">
+                                    <span>♀ Femme</span>
+                                  </span>
+                                ) : (
+                                  <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200 text-[11px] font-bold">
+                                    <span>♂ Homme</span>
+                                  </span>
+                                )}
+
+                                {isUnder18 && (
+                                  <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-800 border border-amber-300 text-[10px] font-extrabold tracking-tight" title="Quilleur de moins de 18 ans (Junior)">
+                                    <span>&lt; 18 ans</span>
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </td>
+
                           {/* Club */}
-                          <td className="py-2.5 px-4 text-gray-600">
+                          <td className="py-2.5 px-3 text-gray-600">
                             {isEditing ? (
                               <input
                                 type="text"
@@ -647,14 +806,14 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleSaveEdit(player.id)}
-                                  className="px-2 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold hover:bg-emerald-700"
+                                  className="px-2 py-1 bg-emerald-600 text-white rounded text-[10px] font-bold hover:bg-emerald-700 cursor-pointer"
                                 >
                                   OK
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setEditingPlayerId(null)}
-                                  className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-[10px] hover:bg-gray-300"
+                                  className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-[10px] hover:bg-gray-300 cursor-pointer"
                                 >
                                   ✕
                                 </button>
@@ -664,15 +823,15 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                                 <button
                                   type="button"
                                   onClick={() => handleStartEdit(player)}
-                                  className="p-1 text-gray-400 hover:text-gray-800 rounded hover:bg-gray-100 transition-colors"
-                                  title="Modifier"
+                                  className="p-1 text-gray-400 hover:text-gray-800 rounded hover:bg-gray-100 transition-colors cursor-pointer"
+                                  title="Modifier le joueur et ses catégories"
                                 >
                                   <Edit2 className="w-3.5 h-3.5" />
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => onDeletePlayer(player.id)}
-                                  className="p-1 text-gray-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors"
+                                  className="p-1 text-gray-400 hover:text-rose-600 rounded hover:bg-rose-50 transition-colors cursor-pointer"
                                   title="Supprimer"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />
@@ -703,17 +862,18 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
               <button
                 type="button"
                 onClick={() => setShowBulkModal(false)}
-                className="text-gray-400 hover:text-gray-700 text-sm font-bold"
+                className="text-gray-400 hover:text-gray-700 text-sm font-bold cursor-pointer"
               >
                 ✕
               </button>
             </div>
 
             <p className="text-xs text-gray-600">
-              Collez votre liste de participants (1 par ligne). Vous pouvez inclure le club séparé par une virgule :
+              Collez votre liste de participants (1 par ligne). Vous pouvez inclure le club, le genre (H/F) et &lt;18 ans séparés par des virgules :
               <br />
-              <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-[11px]">
-                Jean Dupont, Quilleurs de Strasbourg
+              <code className="bg-gray-100 text-gray-800 px-1.5 py-0.5 rounded text-[11px] block mt-1">
+                Marie Curie, BC Colmar, F, U18<br />
+                Jean Dupont, Quilleurs de Strasbourg, H
               </code>
             </p>
 
@@ -722,7 +882,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
               rows={8}
               value={bulkText}
               onChange={(e) => setBulkText(e.target.value)}
-              placeholder={`Pierre Martin, BC Colmar\nPhilippe Durand, Quilleurs de Strasbourg\nAlain Lefebvre, AS Quilles Mulhouse\n...`}
+              placeholder={`Pierre Martin, BC Colmar, H\nMarie Lefebvre, AS Quilles Mulhouse, F\nLucas Petit, Quilleurs de Strasbourg, H, U18\n...`}
               className="w-full p-3 text-xs border border-gray-300 rounded-xl font-mono focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 outline-none"
             />
 
@@ -730,7 +890,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
               <button
                 type="button"
                 onClick={() => setShowBulkModal(false)}
-                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold"
+                className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-xs font-semibold cursor-pointer"
               >
                 Annuler
               </button>
@@ -739,7 +899,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                 id="btn-submit-bulk-import"
                 onClick={handleBulkSubmit}
                 disabled={!bulkText.trim()}
-                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-bold shadow-2xs transition-all disabled:opacity-50"
+                className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-xs font-bold shadow-2xs transition-all disabled:opacity-50 cursor-pointer"
               >
                 Ajouter les participants
               </button>

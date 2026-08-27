@@ -66,7 +66,12 @@ export default function App() {
   }, [tournament.players]);
 
   // 1. Inscriptions Handlers
-  const handleAddPlayer = (newPlayerData: { name: string; team: string }) => {
+  const handleAddPlayer = (newPlayerData: {
+    name: string;
+    team: string;
+    gender?: 'H' | 'F';
+    isUnder18?: boolean;
+  }) => {
     setTournament((prev) => {
       const nextId =
         prev.players.length > 0
@@ -76,6 +81,8 @@ export default function App() {
         id: nextId,
         name: newPlayerData.name,
         team: newPlayerData.team,
+        gender: newPlayerData.gender || 'H',
+        isUnder18: !!newPlayerData.isUnder18,
       };
       return {
         ...prev,
@@ -84,7 +91,15 @@ export default function App() {
     });
   };
 
-  const handleUpdatePlayer = (id: number, updated: { name: string; team: string }) => {
+  const handleUpdatePlayer = (
+    id: number,
+    updated: {
+      name: string;
+      team: string;
+      gender?: 'H' | 'F';
+      isUnder18?: boolean;
+    }
+  ) => {
     setTournament((prev) => ({
       ...prev,
       players: prev.players.map((p) => (p.id === id ? { ...p, ...updated } : p)),
@@ -98,7 +113,14 @@ export default function App() {
     }));
   };
 
-  const handleBatchAddPlayers = (newItems: Array<{ name: string; team: string }>) => {
+  const handleBatchAddPlayers = (
+    newItems: Array<{
+      name: string;
+      team: string;
+      gender?: 'H' | 'F';
+      isUnder18?: boolean;
+    }>
+  ) => {
     setTournament((prev) => {
       let currentMaxId =
         prev.players.length > 0
@@ -111,6 +133,8 @@ export default function App() {
           id: currentMaxId,
           name: item.name,
           team: item.team,
+          gender: item.gender || 'H',
+          isUnder18: !!item.isUnder18,
         };
       });
 

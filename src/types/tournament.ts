@@ -1,7 +1,11 @@
+export type Gender = 'H' | 'F';
+
 export interface Player {
   id: number; // Numéro attribué au joueur (ex: 1, 2, 3...)
   name: string;
   team: string; // Nom de l'équipe ou club (ex: Quilleurs d'Alsace, AS Bowling, etc.)
+  gender?: Gender; // 'H' (Homme) ou 'F' (Femme) - défaut 'H'
+  isUnder18?: boolean; // Moins de 18 ans (Junior / Jeune)
   notes?: string;
 }
 
