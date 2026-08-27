@@ -82,14 +82,17 @@ export const DEFAULT_SETTINGS: TournamentSettings = {
   round1PoolCount: 16,
   round1QualifiersPerPool: 5,
   round1ThrowsCount: 2,
+  round1LanesCount: 4,
   
   round2PoolCount: 8,
   round2QualifiersPerPool: 5,
   round2ThrowsCount: 1,
+  round2LanesCount: 4,
   
   round3PoolCount: 4,
   round3QualifiersPerPool: 4,
   round3ThrowsCount: 1,
+  round3LanesCount: 4,
 
   pinsCount: 9,
 };

@@ -23,6 +23,8 @@ export interface Poule {
   roundNumber: 1 | 2 | 3;
   playerScores: PoulePlayerScore[];
   qualifyCount: number; // Nombre de qualifiés pour cette poule
+  pisteNumber?: number; // Numéro de piste attribuée (ex: 1, 2, 3...)
+  waveNumber?: number; // Numéro de vague / série / rotation (ex: 1, 2...)
 }
 
 export type FinalRoundType = 'roundOf16' | 'quarterFinals' | 'semiFinals' | 'thirdPlace' | 'final';
@@ -49,14 +51,17 @@ export interface TournamentSettings {
   round1PoolCount: number; // Défaut: 16 poules (ou selon nombre de joueurs)
   round1QualifiersPerPool: number; // Défaut: 5
   round1ThrowsCount: number; // 2 tirs sur 9 quilles
+  round1LanesCount: number; // Nombre de pistes disponibles pour le Tour 1 (défaut: 4)
   
   round2PoolCount: number; // Défaut: 8 poules
   round2QualifiersPerPool: number; // Défaut: 5
   round2ThrowsCount: number; // 1 tir sur 9 quilles
+  round2LanesCount: number; // Nombre de pistes disponibles pour le Tour 2 (défaut: 4)
   
   round3PoolCount: number; // Défaut: 4 poules (A, B, C, D)
   round3QualifiersPerPool: number; // Défaut: 4 (16 qualifiés pour 1/8)
   round3ThrowsCount: number; // 1 tir sur 9 quilles
+  round3LanesCount: number; // Nombre de pistes disponibles pour le Tour 3 (défaut: 4)
 
   pinsCount: number; // 9 quilles
 }

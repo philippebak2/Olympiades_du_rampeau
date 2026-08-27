@@ -193,7 +193,8 @@ export function exportAllPoulesOfRoundToCSV(
     const sorted = sortPoulePlayers(poule, playersMap);
 
     // Titre de la poule
-    rows.push([`=== ${poule.name.toUpperCase()} (Top ${poule.qualifyCount} qualifiés) ===`]);
+    const pisteInfo = poule.pisteNumber ? ` - Piste ${poule.pisteNumber}${poule.waveNumber && poule.waveNumber > 1 ? ` (Vague ${poule.waveNumber})` : ''}` : '';
+    rows.push([`=== ${poule.name.toUpperCase()}${pisteInfo} (Top ${poule.qualifyCount} qualifiés) ===`]);
 
     if (isTour1) {
       rows.push([

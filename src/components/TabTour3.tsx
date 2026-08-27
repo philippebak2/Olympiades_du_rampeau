@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Poule, Player, TournamentSettings } from '../types/tournament';
 import { sortPoulePlayers } from '../utils/tournamentLogic';
 import { exportSinglePouleToCSV, exportAllPoulesOfRoundToCSV } from '../utils/csvExport';
@@ -24,6 +24,7 @@ interface TabTour3Props {
   onUpdateScore: (pouleId: string, playerId: number, throwIndex: number, pins: number) => void;
   onUpdateTieBreak: (pouleId: string, playerId: number, tieBreakScore: number) => void;
   onUpdateSettings?: (newSettings: Partial<TournamentSettings>) => void;
+  onUpdatePoulePiste?: (pouleId: string, pisteNumber: number, waveNumber?: number) => void;
   onAutoSimulateTour3: () => void;
   onAdvanceToFinals: () => void;
 }
@@ -35,9 +36,13 @@ export const TabTour3: React.FC<TabTour3Props> = ({
   onUpdateScore,
   onUpdateTieBreak,
   onUpdateSettings,
+  onUpdatePoulePiste,
   onAutoSimulateTour3,
   onAdvanceToFinals,
 }) => {
+  const [selectedPisteFilter, setSelectedPisteFilter] = useState<number | 'all'>('all');
+  const lanesCount = Math.max(1, settings.round3LanesCount || 4);
+  const totalWaves = Math.max(1, Math.ceil(poules.length / lanesCount));
   if (poules.length === 0) {
     return (
       <div className="bg-white rounded-2xl border border-neutral-200 p-12 text-center space-y-4">
@@ -193,9 +198,31 @@ export const TabTour3: React.FC<TabTour3Props> = ({
 
           {onUpdateSettings && (
             <div className="flex flex-wrap items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-              <span className="text-[11px] font-bold text-gray-700">Paramètres pour les Finales :</span>
               <div className="flex items-center gap-1.5">
-                <span className="text-gray-500">Qualifiés par poule (Top X) :</span>
+                <span className="text-[11px] font-bold text-blue-900">Pistes T3 :</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={settings.round3LanesCount || 4}
+                  onChange={(e) =>
+                    onUpdateSettings({
+                      round3LanesCount: Math.max(1, parseInt(e.target.value) || 1),
+                    })
+                  }
+                  className="w-12 bg-white border border-blue-300 text-blue-900 font-bold rounded px-1.5 py-0.5 text-center text-xs"
+                  title="Nombre de pistes de tir disponibles pour le Tour 3"
+                />
+                <span className="text-[10px] text-blue-600 font-medium">
+                  ({totalWaves} vague{totalWaves > 1 ? 's' : ''})
+                </span>
+              </div>
+
+              <div className="h-3.5 w-px bg-gray-300 mx-0.5" />
+
+              <span className="text-[11px] font-bold text-gray-700">Paramètres Finales :</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-gray-500">Qualifiés/poule :</span>
                 <input
                   type="number"
                   min={1}
@@ -245,29 +272,105 @@ export const TabTour3: React.FC<TabTour3Props> = ({
         </div>
       )}
 
-      {/* 4 Poules (A, B, C, D) Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {poules.map((poule) => {
-          const sortedPlayers = sortPoulePlayers(poule, playersMap);
-          const letter = poule.id.replace('tour3-poule-', '');
+      {/* Filter Bar */}
+      <div className="flex items-center justify-between flex-wrap gap-2.5">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
+          <button
+            type="button"
+            onClick={() => setSelectedPisteFilter('all')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              selectedPisteFilter === 'all'
+                ? 'bg-gray-900 text-white shadow-2xs'
+                : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
+            }`}
+          >
+            Toutes les Poules ({poules.length})
+          </button>
 
-          return (
-            <div
-              key={poule.id}
-              id={`card-poule-t3-${poule.id}`}
-              className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden"
-            >
-              {/* Header */}
-              <div className="bg-gray-50/70 px-4 py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-7 h-7 rounded-md bg-gray-900 text-white font-black text-xs flex items-center justify-center shadow-2xs">
-                    {letter}
-                  </span>
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-900">{poule.name}</h3>
-                    <div className="text-[10px] text-gray-500">Top {poule.qualifyCount} qualifiés pour les Finales</div>
+          <div className="h-4 w-px bg-gray-200 mx-1" />
+
+          {/* Quick Filter By Piste */}
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5">
+            <span className="text-[10px] font-bold text-gray-500 uppercase px-2">Filtre Piste :</span>
+            {Array.from({ length: lanesCount }, (_, i) => i + 1).map((pNum) => (
+              <button
+                key={`filter-piste-t3-${pNum}`}
+                type="button"
+                onClick={() => setSelectedPisteFilter(pNum)}
+                className={`px-2 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  selectedPisteFilter === pNum
+                    ? 'bg-blue-600 text-white shadow-2xs'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Piste {pNum}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* 4 Poules Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {poules
+          .filter((p, pIdx) => {
+            if (selectedPisteFilter === 'all') return true;
+            const assignedPiste = p.pisteNumber ?? ((pIdx % lanesCount) + 1);
+            return assignedPiste === selectedPisteFilter;
+          })
+          .map((poule) => {
+            const pIdx = poules.findIndex((item) => item.id === poule.id);
+            const sortedPlayers = sortPoulePlayers(poule, playersMap);
+            const letter = poule.id.replace('tour3-poule-', '');
+            const assignedPiste = poule.pisteNumber ?? ((pIdx % lanesCount) + 1);
+            const assignedWave = poule.waveNumber ?? (Math.floor(pIdx / lanesCount) + 1);
+
+            return (
+              <div
+                key={poule.id}
+                id={`card-poule-t3-${poule.id}`}
+                className="bg-white rounded-xl border border-gray-200 shadow-xs overflow-hidden"
+              >
+                {/* Header */}
+                <div className="bg-gray-50/70 px-4 py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="w-7 h-7 rounded-md bg-gray-900 text-white font-black text-xs flex items-center justify-center shadow-2xs">
+                      {letter}
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-900">{poule.name}</h3>
+                      <div className="text-[10px] text-gray-500">Top {poule.qualifyCount} qualifiés pour les Finales</div>
+                    </div>
+
+                    {/* Assigned Lane Badge */}
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-900 border border-blue-200">
+                        Piste {assignedPiste}
+                        {totalWaves > 1 && (
+                          <span className="text-[10px] text-blue-600 font-normal">
+                            (Vague {assignedWave}/{totalWaves})
+                          </span>
+                        )}
+                      </span>
+
+                      {onUpdatePoulePiste && (
+                        <select
+                          value={assignedPiste}
+                          onChange={(e) =>
+                            onUpdatePoulePiste(poule.id, parseInt(e.target.value) || 1)
+                          }
+                          className="text-[10px] bg-white border border-gray-300 rounded px-1 py-0.5 text-gray-700 font-medium cursor-pointer"
+                          title="Changer manuellement la piste attribuée à cette poule"
+                        >
+                          {Array.from({ length: lanesCount }, (_, i) => i + 1).map((num) => (
+                            <option key={`opt-piste-t3-${num}`} value={num}>
+                              Piste {num}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   </div>
-                </div>
                 <div className="flex items-center gap-1.5">
                   <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">
                     {poule.qualifyCount} Qualifiés Finales

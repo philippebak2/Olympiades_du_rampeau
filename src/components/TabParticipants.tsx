@@ -236,7 +236,7 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                     max={32}
                     value={settings.round1PoolCount}
                     onChange={(e) =>
-                      onUpdateSettings({
+                    onUpdateSettings({
                         round1PoolCount: Math.max(1, parseInt(e.target.value) || 1),
                       })
                     }
@@ -244,6 +244,33 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                   />
                   <span className="text-[11px] text-gray-500">
                     (~{avgPlayersPerPool} j/poule)
+                  </span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-blue-900 mb-1 flex items-center justify-between">
+                  <span>Pistes disponibles</span>
+                  <span className="text-[10px] font-normal text-blue-600">
+                    {Math.ceil(settings.round1PoolCount / Math.max(1, settings.round1LanesCount || 4))} vague(s)
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    id="input-round1-lanes"
+                    min={1}
+                    max={32}
+                    value={settings.round1LanesCount || 4}
+                    onChange={(e) =>
+                      onUpdateSettings({
+                        round1LanesCount: Math.max(1, parseInt(e.target.value) || 1),
+                      })
+                    }
+                    className="w-16 bg-white border border-blue-300 text-blue-950 font-bold text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                  />
+                  <span className="text-[10px] text-blue-700 font-medium">
+                    {settings.round1PoolCount} poules sur {settings.round1LanesCount || 4} pistes
                   </span>
                 </div>
               </div>
@@ -303,6 +330,33 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
               </div>
 
               <div>
+                <label className="block text-[11px] font-semibold text-blue-900 mb-1 flex items-center justify-between">
+                  <span>Pistes disponibles</span>
+                  <span className="text-[10px] font-normal text-blue-600">
+                    {Math.ceil(settings.round2PoolCount / Math.max(1, settings.round2LanesCount || 4))} vague(s)
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    id="input-round2-lanes"
+                    min={1}
+                    max={20}
+                    value={settings.round2LanesCount || 4}
+                    onChange={(e) =>
+                      onUpdateSettings({
+                        round2LanesCount: Math.max(1, parseInt(e.target.value) || 1),
+                      })
+                    }
+                    className="w-16 bg-white border border-blue-300 text-blue-950 font-bold text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                  />
+                  <span className="text-[10px] text-blue-700 font-medium">
+                    {settings.round2PoolCount} poules sur {settings.round2LanesCount || 4} pistes
+                  </span>
+                </div>
+              </div>
+
+              <div>
                 <label className="block text-[11px] font-semibold text-gray-600 mb-1">
                   Qualifiés par poule (Top X)
                 </label>
@@ -353,6 +407,33 @@ export const TabParticipants: React.FC<TabParticipantsProps> = ({
                     className="w-16 bg-white border border-gray-300 rounded-lg px-2.5 py-1 text-gray-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900"
                   />
                   <span className="text-[11px] text-gray-500">poules au T3</span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[11px] font-semibold text-blue-900 mb-1 flex items-center justify-between">
+                  <span>Pistes disponibles</span>
+                  <span className="text-[10px] font-normal text-blue-600">
+                    {Math.ceil(settings.round3PoolCount / Math.max(1, settings.round3LanesCount || 4))} vague(s)
+                  </span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="number"
+                    id="input-round3-lanes"
+                    min={1}
+                    max={10}
+                    value={settings.round3LanesCount || 4}
+                    onChange={(e) =>
+                      onUpdateSettings({
+                        round3LanesCount: Math.max(1, parseInt(e.target.value) || 1),
+                      })
+                    }
+                    className="w-16 bg-white border border-blue-300 text-blue-950 font-bold text-xs rounded-lg px-2.5 py-1 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-600"
+                  />
+                  <span className="text-[10px] text-blue-700 font-medium">
+                    {settings.round3PoolCount} poules sur {settings.round3LanesCount || 4} pistes
+                  </span>
                 </div>
               </div>
 

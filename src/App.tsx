@@ -19,6 +19,8 @@ import {
   generateFinals,
   propagateFinalMatches,
   sortPoulePlayers,
+  simulatePouleScores,
+  simulateRealisticThrow,
 } from './utils/tournamentLogic';
 import { Header } from './components/Header';
 import { TabParticipants } from './components/TabParticipants';
@@ -173,12 +175,76 @@ export default function App() {
   };
 
   const handleUpdateSettings = (newSettings: Partial<TournamentSettings>) => {
-    setTournament((prev) => ({
-      ...prev,
-      settings: {
+    setTournament((prev) => {
+      const updatedSettings = {
         ...prev.settings,
         ...newSettings,
-      },
+      };
+
+      let updatedT1 = prev.tour1Poules;
+      if (newSettings.round1LanesCount && newSettings.round1LanesCount !== prev.settings.round1LanesCount) {
+        const l1 = Math.max(1, newSettings.round1LanesCount);
+        updatedT1 = prev.tour1Poules.map((p, idx) => ({
+          ...p,
+          pisteNumber: (idx % l1) + 1,
+          waveNumber: Math.floor(idx / l1) + 1,
+        }));
+      }
+
+      let updatedT2 = prev.tour2Poules;
+      if (newSettings.round2LanesCount && newSettings.round2LanesCount !== prev.settings.round2LanesCount) {
+        const l2 = Math.max(1, newSettings.round2LanesCount);
+        updatedT2 = prev.tour2Poules.map((p, idx) => ({
+          ...p,
+          pisteNumber: (idx % l2) + 1,
+          waveNumber: Math.floor(idx / l2) + 1,
+        }));
+      }
+
+      let updatedT3 = prev.tour3Poules;
+      if (newSettings.round3LanesCount && newSettings.round3LanesCount !== prev.settings.round3LanesCount) {
+        const l3 = Math.max(1, newSettings.round3LanesCount);
+        updatedT3 = prev.tour3Poules.map((p, idx) => ({
+          ...p,
+          pisteNumber: (idx % l3) + 1,
+          waveNumber: Math.floor(idx / l3) + 1,
+        }));
+      }
+
+      return {
+        ...prev,
+        settings: updatedSettings,
+        tour1Poules: updatedT1,
+        tour2Poules: updatedT2,
+        tour3Poules: updatedT3,
+      };
+    });
+  };
+
+  const handleUpdatePoulePisteTour1 = (pouleId: string, pisteNumber: number, waveNumber?: number) => {
+    setTournament((prev) => ({
+      ...prev,
+      tour1Poules: prev.tour1Poules.map((poule) =>
+        poule.id === pouleId ? { ...poule, pisteNumber, ...(waveNumber !== undefined ? { waveNumber } : {}) } : poule
+      ),
+    }));
+  };
+
+  const handleUpdatePoulePisteTour2 = (pouleId: string, pisteNumber: number, waveNumber?: number) => {
+    setTournament((prev) => ({
+      ...prev,
+      tour2Poules: prev.tour2Poules.map((poule) =>
+        poule.id === pouleId ? { ...poule, pisteNumber, ...(waveNumber !== undefined ? { waveNumber } : {}) } : poule
+      ),
+    }));
+  };
+
+  const handleUpdatePoulePisteTour3 = (pouleId: string, pisteNumber: number, waveNumber?: number) => {
+    setTournament((prev) => ({
+      ...prev,
+      tour3Poules: prev.tour3Poules.map((poule) =>
+        poule.id === pouleId ? { ...poule, pisteNumber, ...(waveNumber !== undefined ? { waveNumber } : {}) } : poule
+      ),
     }));
   };
 
@@ -259,19 +325,11 @@ export default function App() {
 
   const handleAutoSimulateTour1 = () => {
     setTournament((prev) => {
-      const updated = prev.tour1Poules.map((poule) => ({
-        ...poule,
-        playerScores: poule.playerScores.map((ps) => {
-          // Simulation réaliste de scores entre 3 et 9 quilles
-          const r1 = Math.floor(Math.random() * 5) + 5; // 5 à 9
-          const r2 = Math.floor(Math.random() * 5) + 4; // 4 à 8
-          return {
-            ...ps,
-            tirs: [r1, r2],
-            tieBreakScore: 0,
-          };
-        }),
-      }));
+      const throwsCount = prev.settings.round1ThrowsCount || 2;
+      const maxPins = prev.settings.pinsCount || 9;
+      const updated = prev.tour1Poules.map((poule) =>
+        simulatePouleScores(poule, throwsCount, maxPins)
+      );
       return {
         ...prev,
         tour1Poules: updated,
@@ -353,17 +411,11 @@ export default function App() {
 
   const handleAutoSimulateTour2 = () => {
     setTournament((prev) => {
-      const updated = prev.tour2Poules.map((poule) => ({
-        ...poule,
-        playerScores: poule.playerScores.map((ps) => {
-          const r = Math.floor(Math.random() * 5) + 5;
-          return {
-            ...ps,
-            tirs: [r],
-            tieBreakScore: 0,
-          };
-        }),
-      }));
+      const throwsCount = prev.settings.round2ThrowsCount || 1;
+      const maxPins = prev.settings.pinsCount || 9;
+      const updated = prev.tour2Poules.map((poule) =>
+        simulatePouleScores(poule, throwsCount, maxPins)
+      );
       return {
         ...prev,
         tour2Poules: updated,
@@ -445,17 +497,11 @@ export default function App() {
 
   const handleAutoSimulateTour3 = () => {
     setTournament((prev) => {
-      const updated = prev.tour3Poules.map((poule) => ({
-        ...poule,
-        playerScores: poule.playerScores.map((ps) => {
-          const r = Math.floor(Math.random() * 5) + 5;
-          return {
-            ...ps,
-            tirs: [r],
-            tieBreakScore: 0,
-          };
-        }),
-      }));
+      const throwsCount = prev.settings.round3ThrowsCount || 1;
+      const maxPins = prev.settings.pinsCount || 9;
+      const updated = prev.tour3Poules.map((poule) =>
+        simulatePouleScores(poule, throwsCount, maxPins)
+      );
       return {
         ...prev,
         tour3Poules: updated,
@@ -533,6 +579,7 @@ export default function App() {
   const handleAutoSimulateFinals = () => {
     setTournament((prev) => {
       let currentMatches = [...prev.finalMatches];
+      const maxPins = prev.settings.pinsCount || 9;
 
       // Rounds in order
       const roundsOrder: Array<'roundOf16' | 'quarterFinals' | 'semiFinals' | 'thirdPlace' | 'final'> = [
@@ -548,14 +595,21 @@ export default function App() {
           if (m.round !== rName) return m;
           if (!m.player1Id || !m.player2Id) return m;
 
-          let s1 = Math.floor(Math.random() * 4) + 6; // 6 to 9
-          let s2 = Math.floor(Math.random() * 4) + 6;
+          let s1 = simulateRealisticThrow(maxPins, (Math.random() - 0.5) * 20);
+          let s2 = simulateRealisticThrow(maxPins, (Math.random() - 0.5) * 20);
           let tb1 = 0;
           let tb2 = 0;
 
           if (s1 === s2) {
-            tb1 = 8;
-            tb2 = 7;
+            tb1 = simulateRealisticThrow(maxPins);
+            tb2 = simulateRealisticThrow(maxPins);
+            if (tb1 === tb2) {
+              if (Math.random() > 0.5) {
+                tb1 = Math.min(maxPins, tb1 + 1);
+              } else {
+                tb2 = Math.min(maxPins, tb2 + 1);
+              }
+            }
           }
 
           const isP1Win = s1 + tb1 > s2 + tb2;
@@ -675,6 +729,7 @@ export default function App() {
             settings={tournament.settings}
             onUpdateScore={handleUpdateScoreTour1}
             onUpdateTieBreak={handleUpdateTieBreakTour1}
+            onUpdatePoulePiste={handleUpdatePoulePisteTour1}
             onUpdateSettings={handleUpdateSettings}
             onAutoSimulateTour1={handleAutoSimulateTour1}
             onAdvanceToTour2={handleAdvanceToTour2}
@@ -688,6 +743,7 @@ export default function App() {
             settings={tournament.settings}
             onUpdateScore={handleUpdateScoreTour2}
             onUpdateTieBreak={handleUpdateTieBreakTour2}
+            onUpdatePoulePiste={handleUpdatePoulePisteTour2}
             onUpdateSettings={handleUpdateSettings}
             onAutoSimulateTour2={handleAutoSimulateTour2}
             onAdvanceToTour3={handleAdvanceToTour3}
@@ -701,6 +757,7 @@ export default function App() {
             settings={tournament.settings}
             onUpdateScore={handleUpdateScoreTour3}
             onUpdateTieBreak={handleUpdateTieBreakTour3}
+            onUpdatePoulePiste={handleUpdatePoulePisteTour3}
             onUpdateSettings={handleUpdateSettings}
             onAutoSimulateTour3={handleAutoSimulateTour3}
             onAdvanceToFinals={handleAdvanceToFinals}

@@ -24,6 +24,7 @@ interface TabTour2Props {
   onUpdateScore: (pouleId: string, playerId: number, throwIndex: number, pins: number) => void;
   onUpdateTieBreak: (pouleId: string, playerId: number, tieBreakScore: number) => void;
   onUpdateSettings?: (newSettings: Partial<TournamentSettings>) => void;
+  onUpdatePoulePiste?: (pouleId: string, pisteNumber: number, waveNumber?: number) => void;
   onAutoSimulateTour2: () => void;
   onAdvanceToTour3: () => void;
 }
@@ -35,11 +36,16 @@ export const TabTour2: React.FC<TabTour2Props> = ({
   onUpdateScore,
   onUpdateTieBreak,
   onUpdateSettings,
+  onUpdatePoulePiste,
   onAutoSimulateTour2,
   onAdvanceToTour3,
 }) => {
   const [selectedPouleId, setSelectedPouleId] = useState<string>(poules[0]?.id || '');
   const [showAllPoules, setShowAllPoules] = useState(true);
+  const [selectedPisteFilter, setSelectedPisteFilter] = useState<number | 'all'>('all');
+
+  const lanesCount = Math.max(1, settings.round2LanesCount || 4);
+  const totalWaves = Math.max(1, Math.ceil(poules.length / lanesCount));
 
   if (poules.length === 0) {
     return (
@@ -184,7 +190,7 @@ export const TabTour2: React.FC<TabTour2Props> = ({
           </div>
         </div>
 
-        {/* Progress Bar & Tour 3 configuration */}
+        {/* Progress Bar & Tour 2/3 configuration */}
         <div className="mt-4 pt-4 border-t border-gray-100 flex flex-col md:flex-row md:items-center justify-between gap-4 text-xs">
           <div className="flex items-center gap-2">
             <span className="text-gray-500">Progression des tirs Tour 2 :</span>
@@ -195,7 +201,29 @@ export const TabTour2: React.FC<TabTour2Props> = ({
 
           {onUpdateSettings && (
             <div className="flex flex-wrap items-center gap-3 bg-gray-50 px-3 py-1.5 rounded-lg border border-gray-200">
-              <span className="text-[11px] font-bold text-gray-700">Paramètres pour le Tour 3 :</span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[11px] font-bold text-blue-900">Pistes T2 :</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={20}
+                  value={settings.round2LanesCount || 4}
+                  onChange={(e) =>
+                    onUpdateSettings({
+                      round2LanesCount: Math.max(1, parseInt(e.target.value) || 1),
+                    })
+                  }
+                  className="w-12 bg-white border border-blue-300 text-blue-900 font-bold rounded px-1.5 py-0.5 text-center text-xs"
+                  title="Nombre de pistes de tir disponibles pour le Tour 2"
+                />
+                <span className="text-[10px] text-blue-600 font-medium">
+                  ({totalWaves} vague{totalWaves > 1 ? 's' : ''})
+                </span>
+              </div>
+
+              <div className="h-3.5 w-px bg-gray-300 mx-0.5" />
+
+              <span className="text-[11px] font-bold text-gray-700">Suite (T3) :</span>
               <div className="flex items-center gap-1.5">
                 <span className="text-gray-500">Poules :</span>
                 <input
@@ -260,19 +288,46 @@ export const TabTour2: React.FC<TabTour2Props> = ({
       )}
 
       {/* Poule Selector */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div className="flex items-center justify-between flex-wrap gap-2.5">
         <div className="flex items-center gap-2 overflow-x-auto pb-1 max-w-full">
           <button
             type="button"
-            onClick={() => setShowAllPoules(true)}
+            onClick={() => {
+              setShowAllPoules(true);
+              setSelectedPisteFilter('all');
+            }}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-              showAllPoules
+              showAllPoules && selectedPisteFilter === 'all'
                 ? 'bg-gray-900 text-white shadow-2xs'
                 : 'bg-white text-gray-700 hover:bg-gray-100 border border-gray-200'
             }`}
           >
             Toutes les Poules ({poules.length})
           </button>
+
+          <div className="h-4 w-px bg-gray-200 mx-1" />
+
+          {/* Quick Filter By Piste */}
+          <div className="flex items-center gap-1 bg-white border border-gray-200 rounded-lg p-0.5">
+            <span className="text-[10px] font-bold text-gray-500 uppercase px-2">Filtre Piste :</span>
+            {Array.from({ length: lanesCount }, (_, i) => i + 1).map((pNum) => (
+              <button
+                key={`filter-piste-t2-${pNum}`}
+                type="button"
+                onClick={() => {
+                  setSelectedPisteFilter(pNum);
+                  setShowAllPoules(true);
+                }}
+                className={`px-2 py-1 rounded text-xs font-bold transition-all cursor-pointer ${
+                  selectedPisteFilter === pNum
+                    ? 'bg-blue-600 text-white shadow-2xs'
+                    : 'text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                Piste {pNum}
+              </button>
+            ))}
+          </div>
 
           <div className="h-4 w-px bg-gray-200 mx-1" />
 
@@ -283,6 +338,7 @@ export const TabTour2: React.FC<TabTour2Props> = ({
               onClick={() => {
                 setSelectedPouleId(p.id);
                 setShowAllPoules(false);
+                setSelectedPisteFilter('all');
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-all cursor-pointer ${
                 !showAllPoules && selectedPouleId === p.id
@@ -302,10 +358,19 @@ export const TabTour2: React.FC<TabTour2Props> = ({
           showAllPoules ? 'grid-cols-1 xl:grid-cols-2' : 'grid-cols-1'
         }`}
       >
-        {(showAllPoules ? poules : poules.filter((p) => p.id === selectedPouleId)).map(
-          (poule, pIdx) => {
+        {poules
+          .filter((p, pIdx) => {
+            if (!showAllPoules) return p.id === selectedPouleId;
+            if (selectedPisteFilter === 'all') return true;
+            const assignedPiste = p.pisteNumber ?? ((pIdx % lanesCount) + 1);
+            return assignedPiste === selectedPisteFilter;
+          })
+          .map((poule) => {
+            const pIdx = poules.findIndex((item) => item.id === poule.id);
             const sortedPlayers = sortPoulePlayers(poule, playersMap);
             const qualifyLimit = poule.qualifyCount;
+            const assignedPiste = poule.pisteNumber ?? ((pIdx % lanesCount) + 1);
+            const assignedWave = poule.waveNumber ?? (Math.floor(pIdx / lanesCount) + 1);
 
             return (
               <div
@@ -320,6 +385,35 @@ export const TabTour2: React.FC<TabTour2Props> = ({
                       P{pIdx + 1}
                     </span>
                     <h3 className="text-sm font-bold text-gray-900">{poule.name}</h3>
+
+                    {/* Assigned Lane Badge */}
+                    <div className="flex items-center gap-1.5 ml-1">
+                      <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-md bg-blue-50 text-blue-900 border border-blue-200">
+                        Piste {assignedPiste}
+                        {totalWaves > 1 && (
+                          <span className="text-[10px] text-blue-600 font-normal">
+                            (Vague {assignedWave}/{totalWaves})
+                          </span>
+                        )}
+                      </span>
+
+                      {onUpdatePoulePiste && (
+                        <select
+                          value={assignedPiste}
+                          onChange={(e) =>
+                            onUpdatePoulePiste(poule.id, parseInt(e.target.value) || 1)
+                          }
+                          className="text-[10px] bg-white border border-gray-300 rounded px-1 py-0.5 text-gray-700 font-medium cursor-pointer"
+                          title="Changer manuellement la piste attribuée à cette poule"
+                        >
+                          {Array.from({ length: lanesCount }, (_, i) => i + 1).map((num) => (
+                            <option key={`opt-piste-t2-${num}`} value={num}>
+                              Piste {num}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-emerald-50 text-emerald-800 border border-emerald-200">

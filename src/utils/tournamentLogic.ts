@@ -18,6 +18,70 @@ export function shuffleArray<T>(array: T[]): T[] {
   return arr;
 }
 
+/**
+ * Simule un lancer réaliste au jeu de 9 quilles.
+ * Distribution équilibrée (moyenne autour de 4.5 - 5.0 quilles)
+ * avec une large dispersion de 0 à 9 quilles pour éviter les scores uniformes ou artificiellement élevés.
+ */
+export function simulateRealisticThrow(maxPins = 9, formFactor = 0): number {
+  // Distribution de probabilité réaliste pour 9 quilles:
+  // 0 quille (rigole/raté) : ~3%
+  // 1 quille : ~6%
+  // 2 quilles : ~9%
+  // 3 quilles : ~14%
+  // 4 quilles : ~16%
+  // 5 quilles : ~17%
+  // 6 quilles : ~15%
+  // 7 quilles : ~11%
+  // 8 quilles : ~6%
+  // 9 quilles (abattu plein) : ~3%
+  const rand = Math.random() * 100 + formFactor;
+  let pins = 0;
+  if (rand < 3) pins = 0;
+  else if (rand < 9) pins = 1;
+  else if (rand < 18) pins = 2;
+  else if (rand < 32) pins = 3;
+  else if (rand < 48) pins = 4;
+  else if (rand < 65) pins = 5;
+  else if (rand < 80) pins = 6;
+  else if (rand < 91) pins = 7;
+  else if (rand < 97) pins = 8;
+  else pins = 9;
+
+  return Math.min(maxPins, Math.max(0, pins));
+}
+
+/**
+ * Simule les scores d'une poule avec une variation réaliste et étalée entre joueurs.
+ * Les scores de barrage (tieBreakScore) restent à 0 afin de laisser l'arbitre/utilisateur
+ * saisir manuellement les barrages en cas d'égalité sur la ligne de qualification.
+ */
+export function simulatePouleScores(
+  poule: Poule,
+  throwsCount: number,
+  maxPins = 9
+): Poule {
+  // Attribuer à chaque joueur un facteur de forme individuel (-25 à +25) pour étaler naturellement les niveaux
+  const updatedPlayerScores: PoulePlayerScore[] = poule.playerScores.map((ps) => {
+    const playerForm = (Math.random() - 0.5) * 50;
+    const tirs: number[] = [];
+    for (let t = 0; t < throwsCount; t++) {
+      const shotNoise = (Math.random() - 0.5) * 20;
+      tirs.push(simulateRealisticThrow(maxPins, playerForm + shotNoise));
+    }
+    return {
+      ...ps,
+      tirs,
+      tieBreakScore: 0, // Aucun barrage automatique : saisie manuelle si besoin
+    };
+  });
+
+  return {
+    ...poule,
+    playerScores: updatedPlayerScores,
+  };
+}
+
 // Calcul du score d'un joueur dans une poule
 export function calculatePlayerScore(playerScore: PoulePlayerScore): {
   roundScore: number;
@@ -132,6 +196,22 @@ export function sortPoulePlayers(
   });
 }
 
+// Helper pour calculer les informations de piste et de vague d'une poule
+export function getPoulePisteInfo(
+  poule: Poule,
+  indexInRound: number,
+  lanesCount: number
+): { piste: number; wave: number; totalWaves: number } {
+  const safeLanes = Math.max(1, lanesCount || 4);
+  const piste = poule.pisteNumber ?? ((indexInRound % safeLanes) + 1);
+  const wave = poule.waveNumber ?? (Math.floor(indexInRound / safeLanes) + 1);
+  return {
+    piste,
+    wave,
+    totalWaves: Math.max(1, Math.ceil((indexInRound + 1) / safeLanes)),
+  };
+}
+
 // 1. Génération du Tour 1
 export function generateTour1(
   players: Player[],
@@ -140,6 +220,7 @@ export function generateTour1(
   if (players.length === 0) return [];
   const shuffled = shuffleArray(players);
   const poolCount = Math.max(1, settings.round1PoolCount);
+  const lanesCount = Math.max(1, settings.round1LanesCount || 4);
   const poules: Poule[] = [];
 
   for (let i = 0; i < poolCount; i++) {
@@ -149,6 +230,8 @@ export function generateTour1(
       roundNumber: 1,
       playerScores: [],
       qualifyCount: settings.round1QualifiersPerPool,
+      pisteNumber: (i % lanesCount) + 1,
+      waveNumber: Math.floor(i / lanesCount) + 1,
     });
   }
 
@@ -174,6 +257,7 @@ export function generateTour2(
   settings: TournamentSettings
 ): Poule[] {
   const targetPoolCount = Math.max(1, settings.round2PoolCount || Math.ceil(tour1Poules.length / 2));
+  const lanesCount = Math.max(1, settings.round2LanesCount || 4);
   const tour2Poules: Poule[] = [];
 
   // Récupérer tous les qualifiés du Tour 1 dans l'ordre des poules
@@ -200,6 +284,8 @@ export function generateTour2(
         roundNumber: 2,
         playerScores: [...q1, ...q2],
         qualifyCount: settings.round2QualifiersPerPool,
+        pisteNumber: (i % lanesCount) + 1,
+        waveNumber: Math.floor(i / lanesCount) + 1,
       });
     }
   } else {
@@ -212,6 +298,8 @@ export function generateTour2(
         roundNumber: 2,
         playerScores: [],
         qualifyCount: settings.round2QualifiersPerPool,
+        pisteNumber: (i % lanesCount) + 1,
+        waveNumber: Math.floor(i / lanesCount) + 1,
       });
     }
 
@@ -231,6 +319,7 @@ export function generateTour3(
   settings: TournamentSettings
 ): Poule[] {
   const targetPoolCount = Math.max(1, settings.round3PoolCount || 4);
+  const lanesCount = Math.max(1, settings.round3LanesCount || 4);
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const tour3Poules: Poule[] = [];
 
@@ -259,6 +348,8 @@ export function generateTour3(
         roundNumber: 3,
         playerScores: [...q1, ...q2],
         qualifyCount: settings.round3QualifiersPerPool,
+        pisteNumber: (i % lanesCount) + 1,
+        waveNumber: Math.floor(i / lanesCount) + 1,
       });
     }
   } else {
@@ -272,6 +363,8 @@ export function generateTour3(
         roundNumber: 3,
         playerScores: [],
         qualifyCount: settings.round3QualifiersPerPool,
+        pisteNumber: (i % lanesCount) + 1,
+        waveNumber: Math.floor(i / lanesCount) + 1,
       });
     }
 

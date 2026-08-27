@@ -265,12 +265,23 @@ export function exportPoulesToPdf({
   </div>
 
   ${poulesToExport
-    .map((poule) => {
+    .map((poule, pIdx) => {
+      const originalIndex = poules.findIndex((p) => p.id === poule.id);
+      const realIdx = originalIndex >= 0 ? originalIndex : pIdx;
       const sorted = sortPoulePlayers(poule, playersMap);
+      const lanes = roundNumber === 1 ? (settings?.round1LanesCount || 4) : roundNumber === 2 ? (settings?.round2LanesCount || 4) : (settings?.round3LanesCount || 4);
+      const piste = poule.pisteNumber ?? ((realIdx % lanes) + 1);
+      const wave = poule.waveNumber ?? (Math.floor(realIdx / lanes) + 1);
+      const totalWaves = Math.max(1, Math.ceil(poules.length / lanes));
+      const pisteLabel = totalWaves > 1 ? `Piste ${piste} (Vague ${wave}/${totalWaves})` : `Piste ${piste}`;
+
       return `
       <div class="poule-card">
         <div class="poule-header">
-          <span class="poule-title">${poule.name}</span>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span class="poule-title">${poule.name}</span>
+            <span style="background:#0f172a; color:#ffffff; font-size:11px; font-weight:700; padding:2px 8px; border-radius:4px;">${pisteLabel}</span>
+          </div>
           <span class="poule-badge">${sorted.length} Joueurs • Top ${poule.qualifyCount} qualifiés pour ${nextPhaseName}</span>
         </div>
         <table class="table-container">
@@ -685,13 +696,9 @@ export function exportJudgesScoreSheetPDF({
 
   ${poulesToExport
     .map((poule, pIndex) => {
-      const playersInPoule = poule.playerScores.map((ps) => {
-        const player = playersMap.get(ps.playerId);
-        return {
-          scoreObj: ps,
-          player,
-        };
-      });
+      const originalIndex = poules.findIndex((p) => p.id === poule.id);
+      const realIdx = originalIndex >= 0 ? originalIndex : pIndex;
+      const sortedPlayers = sortPoulePlayers(poule, playersMap);
 
       return `
       <div class="sheet-wrapper">
@@ -710,12 +717,20 @@ export function exportJudgesScoreSheetPDF({
               <div class="meta-item">
                 <span class="meta-label">Poule :</span>
                 <span class="meta-value-box">${poule.name}</span>
-                <span style="font-size:11px; font-weight:700; color:#475569; margin-left:6px;">(${playersInPoule.length} Joueurs)</span>
+                <span style="font-size:11px; font-weight:700; color:#475569; margin-left:6px;">(${sortedPlayers.length} Joueurs)</span>
               </div>
 
               <div class="meta-item">
                 <span class="meta-label">Piste N° :</span>
-                <span class="meta-value-box">Piste ${pIndex + 1}</span>
+                <span class="meta-value-box">${
+                  (() => {
+                    const lanes = roundNumber === 1 ? (settings?.round1LanesCount || 4) : roundNumber === 2 ? (settings?.round2LanesCount || 4) : (settings?.round3LanesCount || 4);
+                    const piste = poule.pisteNumber ?? ((realIdx % lanes) + 1);
+                    const wave = poule.waveNumber ?? (Math.floor(realIdx / lanes) + 1);
+                    const totalWaves = Math.max(1, Math.ceil(poules.length / lanes));
+                    return totalWaves > 1 ? `Piste ${piste} (Vague ${wave}/${totalWaves})` : `Piste ${piste}`;
+                  })()
+                }</span>
                 <span style="font-size:11px; font-weight:600; color:#475569; margin-left:6px;">Date : ${currentDate}</span>
               </div>
 
@@ -763,7 +778,7 @@ export function exportJudgesScoreSheetPDF({
               </tr>
             </thead>
             <tbody>
-              ${playersInPoule
+              ${sortedPlayers
                 .map((item, idx) => {
                   const p = item.player;
                   const pid = item.scoreObj.playerId;
